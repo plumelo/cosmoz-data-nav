@@ -1,5 +1,5 @@
 {
-	"name": "cosmoz-tabs",
+	"name": "cosmoz-data-nav",
 	"description": "Navigator that renders items from a list one at a time",
 	"license": "Apache-2.0",
 	"main": "cosmoz-data-nav.html",

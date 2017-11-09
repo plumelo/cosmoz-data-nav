@@ -11,14 +11,26 @@
 		<link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html" />
 		<link rel="import" href="../../iron-demo-helpers/demo-snippet.html" />
 
+		<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
+		<link rel="import" href="../../iron-icons/iron-icons.html" />
+		<link rel="import" href="../../neon-animation/neon-animatable.html" />
 		<link rel="import" href="../cosmoz-data-nav.html" />
 
 		<custom-style>
 			<style is="custom-style" include="demo-pages-shared-styles iron-flex">
 				#container {
-					 max-width: 800px;
-				 }
-
+					max-width: 800px;
+				}
+				cosmoz-data-nav {
+					display: block;
+					height: 400px;
+					position: relative;
+				}
+				.text {
+					font-size: 300px;
+					line-height: 360px;
+					text-align: center;
+				}
 			</style>
 		</custom-style>
 	</head>
@@ -29,9 +41,15 @@
 				<template>
 					<dom-bind id="basic">
 						<template is="dom-bind">
-							<cosmoz-data-nav>
+							<cosmoz-data-nav items="[[ items ]]" index-as="index" item-as="item" on-need-data="onNeedData">
 								<template>
-									Item
+									<neon-animatable class="layout vertical" style$="background-color: {{ computeColor(index) }}">
+										<div class="flex text">{{ item.id }}</div>
+										<div>
+											<paper-icon-button slot="actions" disabled$="[[ isFirstItem ]]" icon="chevron-left" cosmoz-data-nav-select="previous"></paper-icon-button>
+											<paper-icon-button slot="actions" disabled$="[[ isLastItem ]]" icon="chevron-right" cosmoz-data-nav-select="next"></paper-icon-button>
+										</div>
+									</neon-animatable>
 								</template>
 							</cosmoz-data-nav>
 						</template>
@@ -41,6 +59,24 @@
 		</div>
 		<script type="text/javascript">
 		(function () {
+			window.addEventListener('WebComponentsReady', function () {
+				let basic = document.getElementById('basic'),
+					items =   Array(20).fill('').map((e, i) => i.toString());
+				basic = !basic.set ? basic.firstElementChild : basic;
+
+				basic.computeColor = function () {
+					return '#' + Math.random().toString(16).slice(-3);
+				};
+				basic.onNeedData = function (event, detail) {
+					console.log('on need data');
+					Polymer.Base.async(() => {
+						event.target.setItemById(detail.id, { id: detail.id });
+					}, 300);
+					return { id: detail.id };
+				};
+				basic.set('items', items);
+
+			});
 			///
 		})();
 		</script>
