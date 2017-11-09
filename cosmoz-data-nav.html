@@ -1,0 +1,58 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../neon-animation/neon-animated-pages.html" />
+<link rel="import" href="../neon-animation/neon-animatable.html" />
+<link rel="import" href="../neon-animation/neon-animations.html" />
+
+<!--
+`cosmoz-data-nav` provides a way to show each individual item of a list in a queue-style behavior
+to the user.
+
+A list of `items` and a `<template>` for each item is used to render the queue, and methods to
+slide to next/previous item is exposed.
+
+For performance and to avoid DOM bloat, the items are "lazy-rendered" and the `maxPreload` setting
+decides how many _upcoming_ items that should be pre-rendered.
+
+It can also be "lazy-loaded" when each item's details aren't available, by instead of (or in addition to)
+`items` also set an `idList` array with identifiers for each item.
+If `cosmoz-data-nav` tries to render an item that is missing but an id exists for the position, it will fire
+a `need-data` event to announce this and expect an `object-details-fetched` event when the item details are
+available. This event should have an `id` property that corresponds to the `id` requested and also an `object`
+property with the item. This design enables parallelization since multiple items can be requested at once,
+and responded to in an unordered, async manner. Also, `cosmoz-data-nav` does not need to be aware of any
+template-design or item model.
+
+Example:
+
+    <cosmoz-data-nav id-list="[[ getItemIds(myList) ]]" on-need-data="triggerDetailFetch">
+        <template>
+            <neon-animatable class="vertical layout fit">
+                <my-view>
+                    <paper-icon-button slot="actions" disabled$="[[ isFirstItem ]]" icon="chevron-left" on-click="selectPrevious"></paper-icon-button>
+                    <paper-icon-button slot="actions" disabled$="[[ isLastItem ]]" icon="chevron-right" on-click="selectNext"></paper-icon-button>
+                </my-view>
+            </neon-animatable>
+        </template>
+    </cosmoz-data-nav>
+
+@demo demo/index.html
+-->
+
+<dom-module id="cosmoz-data-nav">
+	<template>
+		<style>
+			#dataNavPages {
+				@apply --layout-fit;
+				overflow-x: hidden;
+			}
+		</style>
+		<neon-animated-pages class="fit" id="dataNavPages"
+			entry-animation="[[ _entryAnimation ]]" exit-animation="[[ _exitAnimation ]]"
+			on-neon-animation-finish="_synchronize">
+			<slot id="items"></slot>
+		</neon-animated-pages>
+	</template>
+	<script type="text/javascript" src="cosmoz-data-nav.js"></script>
+</dom-module>
