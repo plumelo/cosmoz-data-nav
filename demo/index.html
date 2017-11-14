@@ -13,7 +13,6 @@
 
 		<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
 		<link rel="import" href="../../iron-icons/iron-icons.html" />
-		<link rel="import" href="../../neon-animation/neon-animatable.html" />
 		<link rel="import" href="../cosmoz-data-nav.html" />
 
 		<custom-style>
@@ -43,13 +42,13 @@
 						<template is="dom-bind">
 							<cosmoz-data-nav items="[[ items ]]" index-as="index" item-as="item" on-need-data="onNeedData">
 								<template>
-									<neon-animatable class="layout vertical" style$="background-color: {{ computeColor(index) }}">
+									<div class="fit layout vertical" style$="background-color: {{ computeColor(index) }}">
 										<div class="flex text">{{ item.id }}</div>
 										<div>
-											<paper-icon-button slot="actions" disabled$="[[ isFirstItem ]]" icon="chevron-left" cosmoz-data-nav-select="previous"></paper-icon-button>
-											<paper-icon-button slot="actions" disabled$="[[ isLastItem ]]" icon="chevron-right" cosmoz-data-nav-select="next"></paper-icon-button>
+											<paper-icon-button slot="actions" disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
+											<paper-icon-button slot="actions" disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
 										</div>
-									</neon-animatable>
+									</div>
 								</template>
 							</cosmoz-data-nav>
 						</template>
@@ -71,7 +70,7 @@
 					console.log('on need data');
 					Polymer.Base.async(() => {
 						event.target.setItemById(detail.id, { id: detail.id });
-					}, 300);
+					}, 2000);
 					return { id: detail.id };
 				};
 				basic.set('items', items);

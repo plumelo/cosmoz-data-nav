@@ -5,7 +5,23 @@
 	'use strict';
 
 	const _async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
-		_cancelAsync = window.cancelIdleCallback || window.cancelAnimationFrame || Polymer.Base.cancelAsync;
+		_asyncPeriod = function (cb, minimum = 5) {
+			return _async(function (deadline) {
+				if (deadline && 'IdleDeadline' in window && deadline instanceof window.IdleDeadline && deadline.timeRemaining() < minimum) {
+					_asyncPeriod(cb, minimum);
+					return;
+				}
+				cb();
+			});
+		},
+		_asyncAnimation = function (cb, minimum) {
+			if (window.requestIdleCallback) {
+				return _asyncPeriod(() => {
+					requestAnimationFrame(cb);
+				}, minimum);
+			}
+			return requestAnimationFrame(cb);
+		};
 
 	Polymer({
 		is: 'cosmoz-data-nav',
@@ -31,19 +47,21 @@
 			/**
 			 * True if first item is selected.
 			 */
-			atFirstItem: {
+			nextDisabled: {
 				type: Boolean,
 				notify: true,
-				readOnly: true
+				readOnly: true,
+				value: true
 			},
 
 			/**
 			 *  True if last item is selected.
 			 */
-			atLastItem: {
+			prevDisabled: {
 				type: Boolean,
 				notify: true,
-				readOnly: true
+				readOnly: true,
+				value: true
 			},
 
 			/**
@@ -64,7 +82,7 @@
 			queueLength: {
 				type: Number,
 				notify: true,
-				readOnly: true,
+				readOnly: true
 			},
 
 			/**
@@ -78,7 +96,7 @@
 			/**
 			 * The currently selected index.
 			 */
-			selectedIndex: {
+			selected: {
 				type: Number,
 				notify: true,
 				observer: '_updateSelected'
@@ -87,7 +105,7 @@
 			/**
 			 * The index of the next element.
 			 */
-			selectedIndexNext: {
+			selectedNext: {
 				type: Number,
 				notify: true,
 				value: 1,
@@ -104,31 +122,54 @@
 			},
 
 			/**
-			 * The attribute that elements which control the `selectedIndex` of this element
-			 * should have. The value of the attribute can be `next` or `previous`.
+			 * The attribute that elements which control the `selected` of this element
+			 * should have. The value of the attribute can be `-1` or `+1`.
 			 */
 			selectAttribute: {
 				type: String,
 				value: 'cosmoz-data-nav-select'
 			},
 
-			_entryAnimation: {
-				type: String,
-				value: 'slide-from-left-animation'
+			/**
+			 *  True if the element is currently animating.
+			 */
+			animating: {
+				type: Boolean,
+				value: false,
+				reflectToAttribute: true,
 			},
-			_exitAnimation: {
-				type: String,
-				value: 'slide-right-animation'
-			}
 
+			/**
+			 * True if selecting a element with a index smaller than the current one.
+			 */
+			reverse: {
+				type: Boolean,
+				value: false,
+				reflectToAttribute: true,
+			},
+
+			/**
+			 * Function used to determine if a item is incomplete and needs to be preloaded.
+			 * The default values is a function that requires item to be a `Object`.
+			 */
+			isIncompleteFn: {
+				type: Function,
+				value: function () {
+					return  item => {
+						return typeof item !== 'object';
+					};
+				}
+			}
 		},
 
 		behaviors: [
-			Polymer.Templatizer
+			Polymer.Templatizer,
+			Polymer.IronResizableBehavior
 		],
 
 		listeners: {
-			tap: '_onTap'
+			tap: '_onTap',
+			transitionend: '_onTransitionEnd'
 		},
 
 		/**
@@ -138,15 +179,9 @@
 		 */
 		created: function () {
 			this._cache = {};
-		},
-
-		/**
-		 * Polymer `ready` livecycle function.
-		 *
-		 * @return {void}
-		 */
-		ready: function () {
-			this._ensureTemplatized();
+			this._elements = [];
+			this._spawn = this._spawn.bind(this);
+			this._spawnSteps = Array(2).fill(this._createInstance);
 		},
 
 		/**
@@ -155,9 +190,7 @@
 		 * @return {void}
 		 */
 		attached: function () {
-			if (this._templateInstances.length < 3) {
-				this._asyncSpawner = _async(this._spawn.bind(this));
-			}
+			this._observer = Polymer.dom(this).observeNodes(this._onNodesChange);
 		},
 
 		/**
@@ -166,57 +199,90 @@
 		 * @return {void}
 		 */
 		detached: function () {
-			if (this._asyncSpawner) {
-				_cancelAsync(this._asyncSpawner);
+			if (this._observer) {
+				Polymer.dom(this).unobserveNodes(this._observer);
+				this._observer = null;
 			}
+			this._cache = {};
 		},
 
-		_spawn: function () {
+		_onNodesChange() {
+			if (this._userTemplate) {
+				return;
+			}
+			const template = this.queryEffectiveChildren('template');
+
+			if (!template) {
+				console.warn('cosmoz-data-nav requires a template');
+				return;
+			}
+
+			this._userTemplate = template;
+			this._ensureTemplatized();
+			_asyncPeriod(this._spawn, 40);
+
+		},
+
+		_spawn() {
 			if (!this.isAttached) {
 				return;
 			}
 
-			const instances = this._templateInstances,
-				instance = this.stamp({});
-
-			instances.push(instance);
-			Polymer.dom(this).appendChild(instance.root);
-
-			if (instances.length === 1) {
-				this.$.dataNavPages.selected = 0;
-			}
-			if (instances.length > 2) {
+			const step = this._spawnSteps.shift();
+			if (!step) {
+				this._updateSelected(this.selected = 0);
 				return;
 			}
-			this._asyncSpawner = _async(this._spawn.bind(this));
+
+			step.call(this);
+			_asyncPeriod(this._spawn, 40);
 		},
 
+		_createInstance() {
+			const instance = this.stamp({}),
+				element = document.createElement('div');
 
-		/**
-		 * Select next item in the list.
-		 *
-		 * @return {void}
-		 */
-		selectNext: function () {
-			var nextIndex = this.selectedIndex + 1;
-			if (nextIndex  < this.queueLength) {
-				this._entryAnimation = 'slide-from-right-animation';
-				this._exitAnimation = 'slide-left-animation';
-				this.selectedIndex = nextIndex;
+			element.classList.add('animatable');
+			element.__instance = instance;
+
+			this._templateInstances.push(instance);
+			this._elements.push(element);
+
+			Polymer.dom(element).appendChild(instance.root);
+			Polymer.dom(this).appendChild(element);
+
+		},
+
+		_ensureTemplatized: function () {
+			if (this.ctor || !this._userTemplate) {
+				return;
 			}
+			const props =  {
+				prevDisabled: true,
+				nextDisabled: true
+			};
+			props[this.as] = true;
+			props[this.indexAs] = true;
+
+			this._instanceProps = props;
+			this._parentModel = true;
+			this._templateInstances = [];
+			this.templatize(this._userTemplate);
 		},
 
 		/**
-		 * Select previous item in the list.
+		 * Selects an item by index.
 		 *
+		 * @param  {Number} index The index
 		 * @return {void}
 		 */
-		selectPrevious: function () {
-			if (this.selectedIndex > 0) {
-				this._entryAnimation = 'slide-from-left-animation';
-				this._exitAnimation = 'slide-right-animation';
-				this.selectedIndex = this.selectedIndex - 1;
+		select(index) {
+			const length = this.items && this.items.length;
+			if (!length || index < 0 || index >= length) {
+				return;
 			}
+			this.reverse = index < this.selected;
+			this.selected = index;
 		},
 
 		/**
@@ -227,56 +293,47 @@
 		 * @return {void}
 		 */
 		setItemById: function (id, item) {
-			var index = this.items.indexOf(id);
-
-			if (index > -1) {
-				this.set(['items', index], this._cache[id] = item);
-				this._isPreloading = false;
-				this._synchronize();
-			} else {
+			const index = this.items.indexOf(id);
+			if (index < 0) {
 				console.warn('trying to replace an item that is not in the list', id, item);
+				return;
 			}
+			this.set(['items', index], this._cache[id] = item);
+			this._isPreloading = false;
 			this._preload();
-		},
 
-		_ensureTemplatized: function () {
-			if (!this.ctor) {
-				var props = {
-					isFirstItem: true,
-					isLastItem: true
-				};
-
-				props[this.as] = true;
-				props[this.indexAs] = true;
-
-				this._instanceProps = props;
-				this._userTemplate = this.queryEffectiveChildren('template');
-				this._templateInstances = [];
-
-				if (this._userTemplate) {
-					this.templatize(this._userTemplate);
-				} else {
-					console.warn('cosmoz-data-nav requires a template');
-				}
+			if (index !== this.selected) {
+				this._updateSelection(true);
+				return;
 			}
+
+			this._updateSelected();
 		},
+
 
 		_forwardParentProp: function (prop, value) {
-			if (this._templateInstances) {
-				this._templateInstances.forEach(function (inst) {
-					inst[prop] = value;
-				}, this);
+			const instances = this._templateInstances;
+			if (!instances || !instances.length) {
+				return;
 			}
+			instances.forEach(inst => inst[prop] = value);
 		},
 
 		_forwardParentPath: function (path, value) {
-			if (this._templateInstances) {
-				this._templateInstances.forEach(function (inst) {
-					inst.notifyPath(path, value, true);
-				});
+			const instances = this._templateInstances;
+			if (!instances || !instances.length) {
+				return;
 			}
+			instances.forEach(inst => inst.notifyPath(path, value, true));
 		},
 
+		_forwardHostPropV2: function (prop, value) {
+			const instances = this._templateInstances;
+			if (!instances || !instances.length) {
+				return;
+			}
+			instances.forEach(inst => inst.forwardHostProp(prop, value));
+		},
 
 		/**
 		 * Observes full changes to `items` properties
@@ -287,39 +344,101 @@
 		 */
 		_itemsChanged: function (items) {
 			var length = items && items.length;
-
-			if (length > 0) {
-				items.forEach(function (item, index) {
-					if (typeof item === 'string' && this._cache[item]) {
-						this.set(['items', index], this._cache[item]);
-					}
-				}, this);
-				this.selectedIndex = this._preloadIdx = 0;
-				this._preload();
-			}
-
-			//Update readOnly queueLength
-			this._setQueueLength(length >> 0);
-		},
-
-		/**
-		 * Observes changed to `selectedIndex` property and
-		 * updates related properties and the `selected` page.
-		 *
-		 * @param  {type} selectedIndex description
-		 * @return {type}               description
-		 */
-		_updateSelected: function (selectedIndex) {
-			if (!this._templateInstances) {
+			if (!length) {
 				return;
 			}
 
-			// Update readOnly properties that depend on index
-			this._setAtFirstItem(selectedIndex === 0);
-			this._setAtLastItem(selectedIndex === this.items.length - 1);
-			this._setSelectedIndexNext(selectedIndex + 1);
+			items.forEach((item, index) => {
+				if (this.isIncompleteFn(item) && this._cache[item]) {
+					this.set(['items', index], this._cache[item]);
+				}
+			}, this);
 
-			this.$.dataNavPages.selected = selectedIndex % this._templateInstances.length;
+			//Update readOnly queueLength
+			this._setQueueLength(length >> 0);
+
+			this.selected = this._preloadIdx = 0;
+			this._preload();
+		},
+
+
+		/**
+		 * Updates selection related properties `selectedNext`, `prevDisabled` and `nextDisabled`.
+		 * If `forward` is true it will update the currently selected item's TemplateInstance.
+		 *
+		 * @param  {Boolean} forward = false True if TemplateInstance should be updated.
+		 * @return {void}
+		 */
+		_updateSelection(forward = false) {
+			const items = this.items;
+			this._setSelectedNext((this.selected || 0) + 1);
+			this._setPrevDisabled(this.selected === 0);
+			this._setNextDisabled(this.selectedNext >= items.length || this.isIncompleteFn(items[this.selectedNext]));
+
+			if (!forward || !this._selectedElement) {
+				return;
+			}
+			this._forwardItem(this._selectedElement, items[this.selected]);
+		},
+
+		/**
+		 * Observes changed to `selected` property and
+		 * updates related properties and the `selected` page.
+		 *
+		 * @param  {Number} selected The selected property
+		 * @return {void}
+		 */
+		_updateSelected: function (selected = this.selected) {
+			this._updateSelection();
+
+			const elements = this._elements,
+				element = elements.length && elements[selected % elements.length];
+
+			if (!element) {
+				return;
+			}
+
+			let classes = element.classList,
+				prev = this._selectedElement;
+
+			classes.toggle('in', this.animating);
+			classes.add('selected');
+
+			this._forwardItem(this._selectedElement = element, this.items[selected]);
+			this._notifyElementResize(element);
+
+			if (!this.animating) {
+				return;
+			}
+
+			_asyncAnimation(() => {
+				if (prev) {
+					prev.classList.add('out');
+					prev.classList.remove('selected');
+				}
+				classes.remove('in');
+			}, 8);
+		},
+
+		/**
+		 * Handles `transitionend` event and cleans up animation classe and properties
+		 *
+		 * @param  {TransitionEvent} e The event
+		 * @return {void}
+		 */
+		_onTransitionEnd(e) {
+			const elements = this._elements;
+
+			if (!this.animating || !elements.length || elements.indexOf(e.target) < 0) {
+				return;
+			}
+
+			this.animating = false;
+			this._elements.forEach(el => {
+				const classes = el.classList;
+				classes.remove('in', 'out');
+			});
+
 			this._preload();
 		},
 
@@ -331,61 +450,53 @@
 		 * @return {void}
 		 */
 		_preload: function () {
-			if (!this._templateInstances || !(this.items && this.items.length) || this._isPreloading) {
+			if (!(this.items && this.items.length) || this._isPreloading) {
 				return;
 			}
 			var index = this._preloadIdx,
 				item = this.items[index];
 
-			if (typeof item === 'string') {
+
+			if (this.isIncompleteFn(item)) {
 				this._isPreloading = true;
 				this.fire('need-data', { id: item, render: true });
-			} else {
-				this._synchronize();
-				if (index < Math.min(this.selectedIndex + this.preload, this.items.length - 1)) {
-					this._preloadIdx++;
-					this._preload();
-				}
+				return;
 			}
-		},
 
-		/**
-		 * Syncronizes the `items` data with the created template instances
-		 * depending on the currently selected item.
-		 *
-		 * @return {type}  description
-		 */
-		_synchronize: function () {
-			var instances = this._templateInstances,
-				length = instances.length,
-				index = Math.max(this.selectedIndex - (length / 2 >> 0), 0);
+			if (!(index < Math.min(this.selected + this.preload, this.items.length - 1))) {
+				return;
+			}
 
-			Array.apply(null, Array(length)).forEach(function (o, i) {
-				var idx =  index + i,
-					item =  this.items[idx],
-					instance = this._templateInstances[ idx % length];
+			this._preloadIdx++;
+			this._preload();
 
-				if (typeof item === 'object' && instance.item !== item) {
-					this._forwardItem(instance, item);
-				}
-			}, this);
 		},
 
 		/**
 		 * Forwards an item from `items` property to a template instance.
 		 *
-		 * @param  {TemplateInstance} instance The template instance
-		 * @param  {Object}           item     The Item to forward
+		 * @param  {HTMLElement} element The element
+		 * @param  {Object}      item     The item to forward
 		 * @return {void}
 		 */
-		_forwardItem: function (instance, item) {
-			var index = this.items.indexOf(item);
-			if (instance) {
-				instance[this.as] = item;
-				instance[this.indexAs] = index;
-				instance['isLastItem'] = index === this.items.length - 1;
-				instance['isFirstItem'] = index === 0;
+		_forwardItem: function (element, item) {
+			const items = this.items,
+				index = items.indexOf(item),
+				instance = element.__instance;
+
+			if (!instance || index < 0) {
+				return;
 			}
+
+			instance[this.indexAs] = index;
+			instance['prevDisabled'] = index < 1;
+			instance['nextDisabled'] = index + 1  >= items.length || this.isIncompleteFn(items[index + 1]);
+
+			if (this.isIncompleteFn(item)) {
+				return;
+			}
+
+			instance[this.as] = item;
 		},
 
 		/**
@@ -396,28 +507,109 @@
 		 * @return {void}
 		 */
 		_onTap: function (event) {
-			var target = Polymer.dom(event).rootTarget,
-				select = target.closest('[' + this.selectAttribute + ']');
-			if (select && select.closest(this.is) === this) {
-				select = select.getAttribute(this.selectAttribute);
-				if (select === 'next') {
-					this.selectNext();
-				} else if (select === 'previous') {
-					this.selectPrevious();
-				}
+			if (this.animating) {
+				return;
 			}
+			const path = Polymer.dom(event).path,
+				attr = this.selectAttribute;
+
+			let select = path.find(e => e && e.hasAttribute && e.hasAttribute(attr));
+			if (!select || select.closest(this.is) !== this) {
+				return;
+			}
+			select = parseInt(select.getAttribute(attr), 10);
+			if (isNaN(select)) {
+				return;
+			}
+			this.debounce('select', () => {
+				this.animating = true;
+				this.select(this.selected + select);
+			}, 15);
 		},
 
+		/**
+		* True if the current element is visible.
+		*/
+		get _isVisible() {
+			return Boolean(this.offsetWidth || this.offsetHeight);
+		},
+
+		/**
+		 * Check if a element is a descendant of the currently selected element.
+		 *
+		 * @param  {HTMLElement} element A descendant resizable element
+		 * @return {Boolean} True if the element should be notified
+		 */
+		resizerShouldBeNotified(element) {
+			return element.closest('.animatable')  === this._selectedElement;
+		},
+
+
+		/**
+		 * Handles resize notifications from descendants.
+		 *
+		 * @param  {Event} event The resize event
+		 * @return {void}
+		 */
+		_onDescendantIronResize(event) {
+			if (this._notifyingDescendant || !this._isVisible || !this.resizerShouldBeNotified(event.target)) {
+				event.stopPropagation();
+				return;
+			}
+
+			if (Polymer.Settings.useShadow && event.target.domHost === this) {
+				return;
+			}
+
+			this._fireResize();
+		},
+
+		notifyResize() {
+			if (!this.isAttached || !this._isVisible) {
+				return;
+			}
+			Polymer.IronResizableBehavior.notifyResize.call(this);
+		},
+
+
+		/**
+		 * Notifies a descendant resizable of the element.
+		 *
+		 * @param  {HTMLElement} element The element to search within for a resizable
+		 * @return {void}
+		 */
+		_notifyElementResize(element) {
+			if (!this.isAttached) {
+				return;
+			}
+			const resizable = this._interestedResizables.find(resizable =>
+				resizable.closest('.animatable') === element
+			);
+
+			if (!resizable) {
+				return;
+			}
+
+			this._notifyDescendant(resizable);
+		},
+
+		/**
+		 * Select item by id.
+		 *
+		 * @deprecated
+		 * @param  {String|Number} id The item's id
+		 * @return {void}
+		 */
 		selectById: function (id) {
 			var index,
 				item;
 			for (index = 0; index < this.items.length; index++) {
 				item = this.items[index];
 				if (typeof item === 'object' && item.id === id || item === id) {
-					this.selectedIndex = index;
+					this.selected = index;
 					return;
 				}
 			}
-		}
+		},
 	});
 }());

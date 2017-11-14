@@ -1,9 +1,7 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="../neon-animation/neon-animated-pages.html" />
-<link rel="import" href="../neon-animation/neon-animatable.html" />
-<link rel="import" href="../neon-animation/neon-animations.html" />
 
 <!--
 `cosmoz-data-nav` provides a way to show each individual item of a list in a queue-style behavior
@@ -43,16 +41,44 @@ Example:
 <dom-module id="cosmoz-data-nav">
 	<template>
 		<style>
-			#dataNavPages {
-				@apply --layout-fit;
+			:host {
+				position: relative;
+			}
+
+			#items {
 				overflow-x: hidden;
 			}
+
+			#items,
+			#items > ::slotted(.animatable){
+				@apply --layout-fit;
+				transform: translateX(0px);
+			}
+
+			:host([animating]) #items > ::slotted(.animatable){
+				transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+				backface-visibility: hidden;
+			}
+
+			:host([animating][reverse]) #items > ::slotted(.in),
+			:host([animating]) #items > ::slotted(.out){
+				transform: translateX(-100%);
+			}
+
+			:host([animating][reverse]) #items > ::slotted(.out),
+			:host([animating]) #items > ::slotted(.in){
+				transform: translateX(100%);
+			}
+
+			:host([animating]) #items > ::slotted(:not(.selected):not(.out)),
+			:host(:not([animating])) #items > ::slotted(:not(.selected)) {
+				display: none;
+			}
+
 		</style>
-		<neon-animated-pages class="fit" id="dataNavPages"
-			entry-animation="[[ _entryAnimation ]]" exit-animation="[[ _exitAnimation ]]"
-			on-neon-animation-finish="_synchronize">
-			<slot id="items"></slot>
-		</neon-animated-pages>
+		<div id="items">
+			<slot></slot>
+		</div>
 	</template>
 	<script type="text/javascript" src="cosmoz-data-nav.js"></script>
 </dom-module>

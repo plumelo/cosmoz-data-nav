@@ -7,17 +7,62 @@
       "path": "cosmoz-data-nav.js",
       "properties": [
         {
+          "name": "_parentResizable",
+          "type": "Object",
+          "description": "The closest ancestor element that implements `IronResizableBehavior`.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 36,
+              "column": 6
+            },
+            "end": {
+              "line": 39,
+              "column": 7
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "observer": "\"_parentResizableChanged\""
+            }
+          },
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_notifyingDescendant",
+          "type": "boolean",
+          "description": "True if this element is currently notifying its descendant elements of\nresize.",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 45,
+              "column": 6
+            },
+            "end": {
+              "line": 48,
+              "column": 7
+            }
+          },
+          "metadata": {
+            "polymer": {}
+          },
+          "defaultValue": "false",
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
           "name": "as",
           "type": "string",
           "description": "The name of the variable to add to the binding scope for the array\nelement associated with a template instance.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 16,
+              "line": 32,
               "column": 3
             },
             "end": {
-              "line": 19,
+              "line": 35,
               "column": 4
             }
           },
@@ -33,11 +78,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 25,
+              "line": 41,
               "column": 3
             },
             "end": {
-              "line": 28,
+              "line": 44,
               "column": 4
             }
           },
@@ -47,17 +92,17 @@
           "defaultValue": "\"index\""
         },
         {
-          "name": "atFirstItem",
+          "name": "nextDisabled",
           "type": "boolean",
           "description": "True if first item is selected.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 33,
+              "line": 49,
               "column": 3
             },
             "end": {
-              "line": 37,
+              "line": 54,
               "column": 4
             }
           },
@@ -66,20 +111,21 @@
               "notify": true,
               "readOnly": true
             }
-          }
+          },
+          "defaultValue": "true"
         },
         {
-          "name": "atLastItem",
+          "name": "prevDisabled",
           "type": "boolean",
           "description": "True if last item is selected.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 42,
+              "line": 59,
               "column": 3
             },
             "end": {
-              "line": 46,
+              "line": 64,
               "column": 4
             }
           },
@@ -88,7 +134,8 @@
               "notify": true,
               "readOnly": true
             }
-          }
+          },
+          "defaultValue": "true"
         },
         {
           "name": "items",
@@ -97,11 +144,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 51,
+              "line": 69,
               "column": 3
             },
             "end": {
-              "line": 58,
+              "line": 76,
               "column": 4
             }
           },
@@ -120,11 +167,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 63,
+              "line": 81,
               "column": 3
             },
             "end": {
-              "line": 67,
+              "line": 85,
               "column": 4
             }
           },
@@ -142,11 +189,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 72,
+              "line": 90,
               "column": 3
             },
             "end": {
-              "line": 75,
+              "line": 93,
               "column": 4
             }
           },
@@ -156,17 +203,17 @@
           "defaultValue": "2"
         },
         {
-          "name": "selectedIndex",
+          "name": "selected",
           "type": "number",
           "description": "The currently selected index.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 80,
+              "line": 98,
               "column": 3
             },
             "end": {
-              "line": 84,
+              "line": 102,
               "column": 4
             }
           },
@@ -178,17 +225,17 @@
           }
         },
         {
-          "name": "selectedIndexNext",
+          "name": "selectedNext",
           "type": "number",
           "description": "The index of the next element.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 89,
+              "line": 107,
               "column": 3
             },
             "end": {
-              "line": 94,
+              "line": 112,
               "column": 4
             }
           },
@@ -207,11 +254,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 99,
+              "line": 117,
               "column": 3
             },
             "end": {
-              "line": 103,
+              "line": 121,
               "column": 4
             }
           },
@@ -225,15 +272,15 @@
         {
           "name": "selectAttribute",
           "type": "string",
-          "description": "The attribute that elements which control the `selectedIndex` of this element\nshould have. The value of the attribute can be `next` or `previous`.",
+          "description": "The attribute that elements which control the `selected` of this element\nshould have. The value of the attribute can be `-1` or `+1`.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 109,
+              "line": 127,
               "column": 3
             },
             "end": {
-              "line": 112,
+              "line": 130,
               "column": 4
             }
           },
@@ -243,44 +290,84 @@
           "defaultValue": "\"cosmoz-data-nav-select\""
         },
         {
-          "name": "_entryAnimation",
-          "type": "string",
-          "description": "",
-          "privacy": "protected",
+          "name": "animating",
+          "type": "boolean",
+          "description": "True if the element is currently animating.",
+          "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 114,
+              "line": 135,
               "column": 3
             },
             "end": {
-              "line": 117,
+              "line": 139,
               "column": 4
             }
           },
           "metadata": {
             "polymer": {}
           },
-          "defaultValue": "\"slide-from-left-animation\""
+          "defaultValue": "false"
         },
         {
-          "name": "_exitAnimation",
-          "type": "string",
-          "description": "",
-          "privacy": "protected",
+          "name": "reverse",
+          "type": "boolean",
+          "description": "True if selecting a element with a index smaller than the current one.",
+          "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 118,
+              "line": 144,
               "column": 3
             },
             "end": {
-              "line": 121,
+              "line": 148,
               "column": 4
             }
           },
           "metadata": {
             "polymer": {}
           },
-          "defaultValue": "\"slide-right-animation\""
+          "defaultValue": "false"
+        },
+        {
+          "name": "isIncompleteFn",
+          "type": "Function",
+          "description": "Function used to determine if a item is incomplete and needs to be preloaded.\nThe default values is a function that requires item to be a `Object`.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 154,
+              "column": 3
+            },
+            "end": {
+              "line": 161,
+              "column": 4
+            }
+          },
+          "metadata": {
+            "polymer": {}
+          }
+        },
+        {
+          "name": "_isVisible",
+          "type": "Function",
+          "description": "True if the current element is visible.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 532,
+              "column": 2
+            },
+            "end": {
+              "line": 534,
+              "column": 3
+            }
+          },
+          "metadata": {
+            "polymer": {
+              "readOnly": false
+            }
+          }
         }
       ],
       "methods": [
@@ -378,31 +465,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 138,
+              "line": 179,
               "column": 2
             },
             "end": {
-              "line": 140,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [],
-          "return": {
-            "type": "void"
-          }
-        },
-        {
-          "name": "ready",
-          "description": "Polymer `ready` livecycle function.",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 147,
-              "column": 2
-            },
-            "end": {
-              "line": 149,
+              "line": 184,
               "column": 3
             }
           },
@@ -418,11 +485,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 156,
+              "line": 191,
               "column": 2
             },
             "end": {
-              "line": 160,
+              "line": 193,
               "column": 3
             }
           },
@@ -438,44 +505,7 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 167,
-              "column": 2
-            },
-            "end": {
-              "line": 171,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [],
-          "return": {
-            "type": "void"
-          }
-        },
-        {
-          "name": "_spawn",
-          "description": "",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 173,
-              "column": 2
-            },
-            "end": {
-              "line": 191,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": []
-        },
-        {
-          "name": "selectNext",
-          "description": "Select next item in the list.",
-          "privacy": "public",
-          "sourceRange": {
-            "start": {
-              "line": 199,
+              "line": 200,
               "column": 2
             },
             "end": {
@@ -490,21 +520,320 @@
           }
         },
         {
-          "name": "selectPrevious",
-          "description": "Select previous item in the list.",
+          "name": "notifyResize",
+          "description": "",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 213,
+              "line": 566,
               "column": 2
             },
             "end": {
-              "line": 219,
+              "line": 571,
               "column": 3
             }
           },
           "metadata": {},
+          "params": []
+        },
+        {
+          "name": "assignParentResizable",
+          "description": "Used to assign the closest resizable ancestor to this resizable\nif the ancestor detects a request for notifications.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 98,
+              "column": 4
+            },
+            "end": {
+              "line": 100,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "parentResizable"
+            }
+          ],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "stopResizeNotificationsFor",
+          "description": "Used to remove a resizable descendant from the list of descendants\nthat should be notified of a resize change.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 106,
+              "column": 4
+            },
+            "end": {
+              "line": 113,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "target"
+            }
+          ],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "resizerShouldNotify",
+          "description": "This method can be overridden to filter nested elements that should or\nshould not be notified by the current element. Return true if an element\nshould be notified, or false if it should not be notified.",
+          "privacy": "public",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 124,
+              "column": 4
+            },
+            "end": {
+              "line": 124,
+              "column": 59
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "element",
+              "type": "HTMLElement",
+              "description": "A candidate descendant element that\nimplements `IronResizableBehavior`."
+            }
+          ],
+          "return": {
+            "type": "boolean",
+            "desc": "True if the `element` should be notified of resize."
+          },
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_onDescendantIronResize",
+          "description": "Handles resize notifications from descendants.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 553,
+              "column": 2
+            },
+            "end": {
+              "line": 564,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "event",
+              "type": "Event",
+              "description": "The resize event"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_fireResize",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 140,
+              "column": 4
+            },
+            "end": {
+              "line": 145,
+              "column": 5
+            }
+          },
+          "metadata": {},
           "params": [],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_onIronRequestResizeNotifications",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 147,
+              "column": 4
+            },
+            "end": {
+              "line": 162,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "event"
+            }
+          ],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_parentResizableChanged",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 164,
+              "column": 4
+            },
+            "end": {
+              "line": 168,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "parentResizable"
+            }
+          ],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_notifyDescendant",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 170,
+              "column": 4
+            },
+            "end": {
+              "line": 181,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "descendant"
+            }
+          ],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_requestResizeNotifications",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "file": "bower_components/iron-resizable-behavior/iron-resizable-behavior.html",
+            "start": {
+              "line": 183,
+              "column": 4
+            },
+            "end": {
+              "line": 211,
+              "column": 5
+            }
+          },
+          "metadata": {},
+          "params": [],
+          "inheritedFrom": "Polymer.IronResizableBehavior"
+        },
+        {
+          "name": "_onNodesChange",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 208,
+              "column": 2
+            },
+            "end": {
+              "line": 223,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": []
+        },
+        {
+          "name": "_spawn",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 225,
+              "column": 2
+            },
+            "end": {
+              "line": 238,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": []
+        },
+        {
+          "name": "_createInstance",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 240,
+              "column": 2
+            },
+            "end": {
+              "line": 253,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": []
+        },
+        {
+          "name": "_ensureTemplatized",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 255,
+              "column": 2
+            },
+            "end": {
+              "line": 270,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": []
+        },
+        {
+          "name": "select",
+          "description": "Selects an item by index.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 278,
+              "column": 2
+            },
+            "end": {
+              "line": 285,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "index",
+              "type": "Number",
+              "description": "The index"
+            }
+          ],
           "return": {
             "type": "void"
           }
@@ -515,11 +844,11 @@
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 228,
+              "line": 294,
               "column": 2
             },
             "end": {
-              "line": 239,
+              "line": 310,
               "column": 3
             }
           },
@@ -541,33 +870,16 @@
           }
         },
         {
-          "name": "_ensureTemplatized",
-          "description": "",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 241,
-              "column": 2
-            },
-            "end": {
-              "line": 261,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": []
-        },
-        {
           "name": "_forwardParentProp",
           "description": "",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 263,
+              "line": 313,
               "column": 2
             },
             "end": {
-              "line": 269,
+              "line": 319,
               "column": 3
             }
           },
@@ -587,11 +899,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 271,
+              "line": 321,
               "column": 2
             },
             "end": {
-              "line": 277,
+              "line": 327,
               "column": 3
             }
           },
@@ -606,16 +918,40 @@
           ]
         },
         {
+          "name": "_forwardHostPropV2",
+          "description": "",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 329,
+              "column": 2
+            },
+            "end": {
+              "line": 335,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "prop"
+            },
+            {
+              "name": "value"
+            }
+          ]
+        },
+        {
           "name": "_itemsChanged",
           "description": "Observes full changes to `items` properties\nand replaces cached items with full data if available.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 287,
+              "line": 344,
               "column": 2
             },
             "end": {
-              "line": 302,
+              "line": 361,
               "column": 3
             }
           },
@@ -633,30 +969,80 @@
           }
         },
         {
-          "name": "_updateSelected",
-          "description": "Observes changed to `selectedIndex` property and\nupdates related properties and the `selected` page.",
+          "name": "_updateSelection",
+          "description": "Updates selection related properties `selectedNext`, `prevDisabled` and `nextDisabled`.\nIf `forward` is true it will update the currently selected item's TemplateInstance.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 311,
+              "line": 371,
               "column": 2
             },
             "end": {
-              "line": 323,
+              "line": 381,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "selectedIndex",
-              "type": "type",
-              "description": "description"
+              "name": "forward",
+              "type": "Boolean",
+              "defaultValue": "false",
+              "description": "= false True if TemplateInstance should be updated."
             }
           ],
           "return": {
-            "type": "type",
-            "desc": "description"
+            "type": "void"
+          }
+        },
+        {
+          "name": "_updateSelected",
+          "description": "Observes changed to `selected` property and\nupdates related properties and the `selected` page.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 390,
+              "column": 2
+            },
+            "end": {
+              "line": 420,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "selected = this.selected"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "_onTransitionEnd",
+          "description": "Handles `transitionend` event and cleans up animation classe and properties",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 428,
+              "column": 2
+            },
+            "end": {
+              "line": 442,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "e",
+              "type": "TransitionEvent",
+              "description": "The event"
+            }
+          ],
+          "return": {
+            "type": "void"
           }
         },
         {
@@ -665,11 +1051,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 332,
+              "line": 451,
               "column": 2
             },
             "end": {
-              "line": 349,
+              "line": 472,
               "column": 3
             }
           },
@@ -680,51 +1066,30 @@
           }
         },
         {
-          "name": "_synchronize",
-          "description": "Syncronizes the `items` data with the created template instances\ndepending on the currently selected item.",
-          "privacy": "protected",
-          "sourceRange": {
-            "start": {
-              "line": 357,
-              "column": 2
-            },
-            "end": {
-              "line": 371,
-              "column": 3
-            }
-          },
-          "metadata": {},
-          "params": [],
-          "return": {
-            "type": "type",
-            "desc": "description"
-          }
-        },
-        {
           "name": "_forwardItem",
           "description": "Forwards an item from `items` property to a template instance.",
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 380,
+              "line": 481,
               "column": 2
             },
             "end": {
-              "line": 388,
+              "line": 499,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "instance",
-              "type": "TemplateInstance",
-              "description": "The template instance"
+              "name": "element",
+              "type": "HTMLElement",
+              "description": "The element"
             },
             {
               "name": "item",
               "type": "Object",
-              "description": "The Item to forward"
+              "description": "The item to forward"
             }
           ],
           "return": {
@@ -737,11 +1102,11 @@
           "privacy": "protected",
           "sourceRange": {
             "start": {
-              "line": 397,
+              "line": 508,
               "column": 2
             },
             "end": {
-              "line": 408,
+              "line": 527,
               "column": 3
             }
           },
@@ -758,25 +1123,83 @@
           }
         },
         {
-          "name": "selectById",
-          "description": "",
+          "name": "resizerShouldBeNotified",
+          "description": "Check if a element is a descendant of the currently selected element.",
           "privacy": "public",
           "sourceRange": {
             "start": {
-              "line": 410,
+              "line": 542,
               "column": 2
             },
             "end": {
-              "line": 420,
+              "line": 544,
               "column": 3
             }
           },
           "metadata": {},
           "params": [
             {
-              "name": "id"
+              "name": "element",
+              "type": "HTMLElement",
+              "description": "A descendant resizable element"
             }
-          ]
+          ],
+          "return": {
+            "type": "Boolean",
+            "desc": "True if the element should be notified"
+          }
+        },
+        {
+          "name": "_notifyElementResize",
+          "description": "Notifies a descendant resizable of the element.",
+          "privacy": "protected",
+          "sourceRange": {
+            "start": {
+              "line": 580,
+              "column": 2
+            },
+            "end": {
+              "line": 593,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "element",
+              "type": "HTMLElement",
+              "description": "The element to search within for a resizable"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
+        },
+        {
+          "name": "selectById",
+          "description": "Select item by id.",
+          "privacy": "public",
+          "sourceRange": {
+            "start": {
+              "line": 602,
+              "column": 2
+            },
+            "end": {
+              "line": 612,
+              "column": 3
+            }
+          },
+          "metadata": {},
+          "params": [
+            {
+              "name": "id",
+              "type": "(String|Number)",
+              "description": "The item's id"
+            }
+          ],
+          "return": {
+            "type": "void"
+          }
         }
       ],
       "staticMethods": [],
@@ -789,11 +1212,11 @@
       "metadata": {},
       "sourceRange": {
         "start": {
-          "line": 9,
+          "line": 25,
           "column": 9
         },
         "end": {
-          "line": 421,
+          "line": 613,
           "column": 2
         }
       },
@@ -805,11 +1228,11 @@
           "description": "The name of the variable to add to the binding scope for the array\nelement associated with a template instance.",
           "sourceRange": {
             "start": {
-              "line": 16,
+              "line": 32,
               "column": 3
             },
             "end": {
-              "line": 19,
+              "line": 35,
               "column": 4
             }
           },
@@ -821,11 +1244,11 @@
           "description": "The name of the variable to add to the binding scope with the index\nfor the item.",
           "sourceRange": {
             "start": {
-              "line": 25,
+              "line": 41,
               "column": 3
             },
             "end": {
-              "line": 28,
+              "line": 44,
               "column": 4
             }
           },
@@ -833,15 +1256,15 @@
           "type": "string"
         },
         {
-          "name": "at-first-item",
+          "name": "next-disabled",
           "description": "True if first item is selected.",
           "sourceRange": {
             "start": {
-              "line": 33,
+              "line": 49,
               "column": 3
             },
             "end": {
-              "line": 37,
+              "line": 54,
               "column": 4
             }
           },
@@ -849,15 +1272,15 @@
           "type": "boolean"
         },
         {
-          "name": "at-last-item",
+          "name": "prev-disabled",
           "description": "True if last item is selected.",
           "sourceRange": {
             "start": {
-              "line": 42,
+              "line": 59,
               "column": 3
             },
             "end": {
-              "line": 46,
+              "line": 64,
               "column": 4
             }
           },
@@ -869,11 +1292,11 @@
           "description": "An array containing items from which a selection can be made.",
           "sourceRange": {
             "start": {
-              "line": 51,
+              "line": 69,
               "column": 3
             },
             "end": {
-              "line": 58,
+              "line": 76,
               "column": 4
             }
           },
@@ -885,11 +1308,11 @@
           "description": "The length of items array.",
           "sourceRange": {
             "start": {
-              "line": 63,
+              "line": 81,
               "column": 3
             },
             "end": {
-              "line": 67,
+              "line": 85,
               "column": 4
             }
           },
@@ -901,11 +1324,11 @@
           "description": "Number of items after the currently selected one to preload.",
           "sourceRange": {
             "start": {
-              "line": 72,
+              "line": 90,
               "column": 3
             },
             "end": {
-              "line": 75,
+              "line": 93,
               "column": 4
             }
           },
@@ -913,15 +1336,15 @@
           "type": "number"
         },
         {
-          "name": "selected-index",
+          "name": "selected",
           "description": "The currently selected index.",
           "sourceRange": {
             "start": {
-              "line": 80,
+              "line": 98,
               "column": 3
             },
             "end": {
-              "line": 84,
+              "line": 102,
               "column": 4
             }
           },
@@ -929,15 +1352,15 @@
           "type": "number"
         },
         {
-          "name": "selected-index-next",
+          "name": "selected-next",
           "description": "The index of the next element.",
           "sourceRange": {
             "start": {
-              "line": 89,
+              "line": 107,
               "column": 3
             },
             "end": {
-              "line": 94,
+              "line": 112,
               "column": 4
             }
           },
@@ -949,11 +1372,11 @@
           "description": "The currently selected item, or `null` if no item is selected.",
           "sourceRange": {
             "start": {
-              "line": 99,
+              "line": 117,
               "column": 3
             },
             "end": {
-              "line": 103,
+              "line": 121,
               "column": 4
             }
           },
@@ -962,32 +1385,80 @@
         },
         {
           "name": "select-attribute",
-          "description": "The attribute that elements which control the `selectedIndex` of this element\nshould have. The value of the attribute can be `next` or `previous`.",
+          "description": "The attribute that elements which control the `selected` of this element\nshould have. The value of the attribute can be `-1` or `+1`.",
           "sourceRange": {
             "start": {
-              "line": 109,
+              "line": 127,
               "column": 3
             },
             "end": {
-              "line": 112,
+              "line": 130,
               "column": 4
             }
           },
           "metadata": {},
           "type": "string"
+        },
+        {
+          "name": "animating",
+          "description": "True if the element is currently animating.",
+          "sourceRange": {
+            "start": {
+              "line": 135,
+              "column": 3
+            },
+            "end": {
+              "line": 139,
+              "column": 4
+            }
+          },
+          "metadata": {},
+          "type": "boolean"
+        },
+        {
+          "name": "reverse",
+          "description": "True if selecting a element with a index smaller than the current one.",
+          "sourceRange": {
+            "start": {
+              "line": 144,
+              "column": 3
+            },
+            "end": {
+              "line": 148,
+              "column": 4
+            }
+          },
+          "metadata": {},
+          "type": "boolean"
+        },
+        {
+          "name": "is-incomplete-fn",
+          "description": "Function used to determine if a item is incomplete and needs to be preloaded.\nThe default values is a function that requires item to be a `Object`.",
+          "sourceRange": {
+            "start": {
+              "line": 154,
+              "column": 3
+            },
+            "end": {
+              "line": 161,
+              "column": 4
+            }
+          },
+          "metadata": {},
+          "type": "Function"
         }
       ],
       "events": [
         {
           "type": "CustomEvent",
-          "name": "at-first-item-changed",
-          "description": "Fired when the `atFirstItem` property changes.",
+          "name": "next-disabled-changed",
+          "description": "Fired when the `nextDisabled` property changes.",
           "metadata": {}
         },
         {
           "type": "CustomEvent",
-          "name": "at-last-item-changed",
-          "description": "Fired when the `atLastItem` property changes.",
+          "name": "prev-disabled-changed",
+          "description": "Fired when the `prevDisabled` property changes.",
           "metadata": {}
         },
         {
@@ -1004,14 +1475,14 @@
         },
         {
           "type": "CustomEvent",
-          "name": "selected-index-changed",
-          "description": "Fired when the `selectedIndex` property changes.",
+          "name": "selected-changed",
+          "description": "Fired when the `selected` property changes.",
           "metadata": {}
         },
         {
           "type": "CustomEvent",
-          "name": "selected-index-next-changed",
-          "description": "Fired when the `selectedIndexNext` property changes.",
+          "name": "selected-next-changed",
+          "description": "Fired when the `selectedNext` property changes.",
           "metadata": {}
         },
         {
@@ -1032,12 +1503,12 @@
           "range": {
             "file": "cosmoz-data-nav.html",
             "start": {
-              "line": 53,
+              "line": 79,
               "column": 3
             },
             "end": {
-              "line": 53,
-              "column": 27
+              "line": 79,
+              "column": 16
             }
           }
         }
