@@ -219,7 +219,7 @@
 
 			this._userTemplate = template;
 			this._ensureTemplatized();
-			_asyncPeriod(this._spawn, 40);
+			_asyncPeriod(this._spawn, 10);
 
 		},
 
@@ -235,7 +235,7 @@
 			}
 
 			step.call(this);
-			_asyncPeriod(this._spawn, 40);
+			_asyncPeriod(this._spawn, 10);
 		},
 
 		_createInstance() {
