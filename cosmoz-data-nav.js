@@ -13,14 +13,6 @@
 				}
 				cb();
 			});
-		},
-		_asyncAnimation = function (cb, minimum) {
-			if (window.requestIdleCallback) {
-				return _asyncPeriod(() => {
-					requestAnimationFrame(cb);
-				}, minimum);
-			}
-			return requestAnimationFrame(cb);
 		};
 
 	Polymer({
@@ -156,7 +148,7 @@
 				type: Function,
 				value: function () {
 					return  item => {
-						return typeof item !== 'object';
+						return item == null || typeof item !== 'object';
 					};
 				}
 			}
@@ -180,8 +172,9 @@
 		created: function () {
 			this._cache = {};
 			this._elements = [];
+			this._elementsBuffer = 3;
 			this._spawn = this._spawn.bind(this);
-			this._spawnSteps = Array(2).fill(this._createInstance);
+			this._spawnSteps = Array(this._elementsBuffer).fill(this._createInstance);
 		},
 
 		/**
@@ -227,30 +220,35 @@
 			if (!this.isAttached) {
 				return;
 			}
-
 			const step = this._spawnSteps.shift();
 			if (!step) {
-				this._updateSelected(this.selected = 0);
 				return;
 			}
-
 			step.call(this);
 			_asyncPeriod(this._spawn, 10);
 		},
 
 		_createInstance() {
 			const instance = this.stamp({}),
+				elements = this._elements,
+				index = elements.length,
 				element = document.createElement('div');
 
 			element.classList.add('animatable');
 			element.__instance = instance;
 
 			this._templateInstances.push(instance);
-			this._elements.push(element);
+			elements.push(element);
 
 			Polymer.dom(element).appendChild(instance.root);
 			Polymer.dom(this).appendChild(element);
 
+			if (this.selected != null && index === this.selected) {
+				this.animating = false;
+				this._updateSelected();
+				return;
+			}
+			this._forwardItem(element, this.items[index]);
 		},
 
 		_ensureTemplatized: function () {
@@ -294,22 +292,24 @@
 		 */
 		setItemById: function (id, item) {
 			const index = this.items.indexOf(id);
+
 			if (index < 0) {
 				console.warn('trying to replace an item that is not in the list', id, item);
 				return;
 			}
+
 			this.set(['items', index], this._cache[id] = item);
 			this._isPreloading = false;
 			this._preload();
 
-			if (index !== this.selected) {
-				this._updateSelection(true);
+			if (this.animating) {
 				return;
 			}
-
-			this._updateSelected();
+			if (index === this.selected) {
+				return this._updateSelected();
+			}
+			this._synchronize();
 		},
-
 
 		_forwardParentProp: function (prop, value) {
 			const instances = this._templateInstances;
@@ -361,26 +361,6 @@
 			this._preload();
 		},
 
-
-		/**
-		 * Updates selection related properties `selectedNext`, `prevDisabled` and `nextDisabled`.
-		 * If `forward` is true it will update the currently selected item's TemplateInstance.
-		 *
-		 * @param  {Boolean} forward = false True if TemplateInstance should be updated.
-		 * @return {void}
-		 */
-		_updateSelection(forward = false) {
-			const items = this.items;
-			this._setSelectedNext((this.selected || 0) + 1);
-			this._setPrevDisabled(this.selected === 0);
-			this._setNextDisabled(this.selectedNext >= items.length || this.isIncompleteFn(items[this.selectedNext]));
-
-			if (!forward || !this._selectedElement) {
-				return;
-			}
-			this._forwardItem(this._selectedElement, items[this.selected]);
-		},
-
 		/**
 		 * Observes changed to `selected` property and
 		 * updates related properties and the `selected` page.
@@ -389,10 +369,11 @@
 		 * @return {void}
 		 */
 		_updateSelected: function (selected = this.selected) {
-			this._updateSelection();
+			this._setSelectedNext((this.selected || 0) + 1);
+			this._setPrevDisabled(this.selected === 0);
+			this._setNextDisabled(this.selectedNext >= this.items.length);
 
-			const elements = this._elements,
-				element = elements.length && elements[selected % elements.length];
+			const element =  this._elements[selected % this._elementsBuffer];
 
 			if (!element) {
 				return;
@@ -404,15 +385,16 @@
 			classes.toggle('in', this.animating);
 			classes.add('selected');
 
-			this._forwardItem(this._selectedElement = element, this.items[selected]);
-			this._notifyElementResize(element);
+			this._selectedElement = element;
 
 			if (!this.animating) {
+				this._synchronize();
+				this._notifyElementResize(this._selectedElement);
 				return;
 			}
 
-			_asyncAnimation(() => {
-				if (prev) {
+			requestAnimationFrame(() => {
+				if (prev && prev !== this._selectedElement && element.offsetWidth) {
 					prev.classList.add('out');
 					prev.classList.remove('selected');
 				}
@@ -438,8 +420,10 @@
 				const classes = el.classList;
 				classes.remove('in', 'out');
 			});
-
+			this._notifyElementResize(this._selectedElement);
+			this._synchronize();
 			this._preload();
+
 		},
 
 		/**
@@ -482,20 +466,22 @@
 		_forwardItem: function (element, item) {
 			const items = this.items,
 				index = items.indexOf(item),
-				instance = element.__instance;
+				instance = element.__instance,
+				incomplete = this.isIncompleteFn(item);
 
-			if (!instance || index < 0) {
+			if (!instance) {
 				return;
 			}
 
-			instance[this.indexAs] = index;
+			instance[this.indexAs] = Math.max(index, 0);
 			instance['prevDisabled'] = index < 1;
-			instance['nextDisabled'] = index + 1  >= items.length || this.isIncompleteFn(items[index + 1]);
+			instance['nextDisabled'] = index + 1  >= items.length;
 
-			if (this.isIncompleteFn(item)) {
+			element.classList.toggle('incomplete', incomplete);
+
+			if (incomplete || instance[this.as] === item) {
 				return;
 			}
-
 			instance[this.as] = item;
 		},
 
@@ -552,7 +538,7 @@
 		 * @return {void}
 		 */
 		_onDescendantIronResize(event) {
-			if (this._notifyingDescendant || !this._isVisible || !this.resizerShouldBeNotified(event.target)) {
+			if (this._notifyingDescendant || this.animating || !this._isVisible || !this.resizerShouldBeNotified(event.target)) {
 				event.stopPropagation();
 				return;
 			}
@@ -565,7 +551,7 @@
 		},
 
 		notifyResize() {
-			if (!this.isAttached || !this._isVisible) {
+			if (!this.isAttached || this.animating || !this._isVisible) {
 				return;
 			}
 			Polymer.IronResizableBehavior.notifyResize.call(this);
@@ -611,5 +597,32 @@
 				}
 			}
 		},
+
+		/**
+		* Syncronizes the `items` data with the created template instances
+		* depending on the currently selected item.
+		*
+		* @return {type}  description
+		*/
+		_synchronize: function () {
+			const elements = this._elements,
+				buffer = this._elementsBuffer,
+				offset = buffer / 2 >> 0,
+				max = Math.max,
+				min = Math.min,
+				length = this.items.length,
+				end = max(min(this.selected + offset, length ? length - 1 : 0), buffer - 1);
+
+			let index = min(max(this.selected - offset, 0), length ? length - buffer : 0);
+
+			for (; index <= end; index++) {
+				let element = elements[ index % buffer],
+					item =  this.items[index];
+				if (!element) {
+					continue;
+				}
+				this._forwardItem(element, item);
+			}
+		}
 	});
 }());

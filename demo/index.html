@@ -12,6 +12,7 @@
 		<link rel="import" href="../../iron-demo-helpers/demo-snippet.html" />
 
 		<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
+		<link rel="import" href="../../paper-spinner/paper-spinner-lite.html">
 		<link rel="import" href="../../iron-icons/iron-icons.html" />
 		<link rel="import" href="../cosmoz-data-nav.html" />
 
@@ -46,7 +47,21 @@
 										<div class="flex text">{{ item.id }}</div>
 										<div>
 											<paper-icon-button slot="actions" disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
+											<span>[[index]]</span>
 											<paper-icon-button slot="actions" disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
+										</div>
+									</div>
+									<div incomplete-content class="layout vertical center-justified">
+										<div class="layout horizontal center-justified center">
+											<paper-spinner-lite active></paper-spinner-lite>
+											<div style="margin-left: 10px">
+												<h3>Data is updating</h3>
+											</div>
+										</div>
+										<div class="layout horizontal center-justified center">
+											<paper-icon-button slot="actions" disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
+											<span>[[index]]</span>
+											<paper-icon-button slot="actions" disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1">></paper-icon-button>
 										</div>
 									</div>
 								</template>
@@ -60,7 +75,7 @@
 		(function () {
 			window.addEventListener('WebComponentsReady', function () {
 				let basic = document.getElementById('basic'),
-					items =   Array(20).fill('').map((e, i) => i.toString());
+					items =  Array(20).fill('').map((e, i) => i.toString());
 				basic = !basic.set ? basic.firstElementChild : basic;
 
 				basic.computeColor = function () {
@@ -70,7 +85,7 @@
 					console.log('on need data');
 					Polymer.Base.async(() => {
 						event.target.setItemById(detail.id, { id: detail.id });
-					}, 2000);
+					}, 5000);
 					return { id: detail.id };
 				};
 				basic.set('items', items);

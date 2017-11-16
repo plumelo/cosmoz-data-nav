@@ -75,6 +75,15 @@ Example:
 				display: none;
 			}
 
+			#items > ::slotted(.animatable)>[incomplete-content]{
+				@apply --layout-fit;
+			}
+
+			#items > ::slotted(.animatable:not(.incomplete))>[incomplete-content],
+			#items > ::slotted(.incomplete)>:not([incomplete-content]) {
+				display: none;
+			}
+
 		</style>
 		<div id="items">
 			<slot></slot>
