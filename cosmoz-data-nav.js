@@ -344,18 +344,17 @@
 		 */
 		_itemsChanged: function (items) {
 			var length = items && items.length;
-			if (!length) {
-				return;
-			}
-
-			items.forEach((item, index) => {
-				if (this.isIncompleteFn(item) && this._cache[item]) {
-					this.set(['items', index], this._cache[item]);
-				}
-			}, this);
 
 			//Update readOnly queueLength
 			this._setQueueLength(length >> 0);
+
+			if (length) {
+				items.forEach((item, index) => {
+					if (this.isIncompleteFn(item) && this._cache[item]) {
+						this.set(['items', index], this._cache[item]);
+					}
+				}, this);
+			}
 
 			this.selected = this._preloadIdx = 0;
 			this._preload();
