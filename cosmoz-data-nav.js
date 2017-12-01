@@ -342,8 +342,8 @@
 		 * @param  {type} items description
 		 * @return {type}       description
 		 */
-		_itemsChanged: function (items) {
-			var length = items && items.length;
+		_itemsChanged(items) {
+			const length = items && items.length;
 
 			//Update readOnly queueLength
 			this._setQueueLength(length >> 0);
@@ -353,10 +353,11 @@
 					if (this.isIncompleteFn(item) && this._cache[item]) {
 						this.set(['items', index], this._cache[item]);
 					}
-				}, this);
+				});
 			}
 
 			this.selected = this._preloadIdx = 0;
+			this._synchronize();
 			this._preload();
 		},
 
@@ -422,7 +423,6 @@
 			this._notifyElementResize(this._selectedElement);
 			this._synchronize();
 			this._preload();
-
 		},
 
 		/**
@@ -432,13 +432,13 @@
 		 * @fires need-data
 		 * @return {void}
 		 */
-		_preload: function () {
-			if (!(this.items && this.items.length) || this._isPreloading) {
+		_preload() {
+			if (!Array.isArray(this.items) || this.items.length === 0 || this._isPreloading) {
 				return;
 			}
-			var index = this._preloadIdx,
-				item = this.items[index];
 
+			const index = this._preloadIdx,
+				item = this.items[index];
 
 			if (this.isIncompleteFn(item)) {
 				this._isPreloading = true;
@@ -446,13 +446,12 @@
 				return;
 			}
 
-			if (!(index < Math.min(this.selected + this.preload, this.items.length - 1))) {
+			if (index >= Math.min(this.selected + this.preload, this.items.length - 1)) {
 				return;
 			}
 
 			this._preloadIdx++;
 			this._preload();
-
 		},
 
 		/**
