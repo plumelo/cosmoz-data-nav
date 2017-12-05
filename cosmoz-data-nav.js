@@ -3,17 +3,7 @@
 
 (function () {
 	'use strict';
-
-	const _async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
-		_asyncPeriod = function (cb, minimum = 5) {
-			return _async(function (deadline) {
-				if (deadline && 'IdleDeadline' in window && deadline instanceof window.IdleDeadline && deadline.timeRemaining() < minimum) {
-					_asyncPeriod(cb, minimum);
-					return;
-				}
-				cb();
-			});
-		};
+	const IS_V2 = Polymer.flush != null;
 
 	Polymer({
 		is: 'cosmoz-data-nav',
@@ -146,7 +136,7 @@
 			 */
 			isIncompleteFn: {
 				type: Function,
-				value: function () {
+				value() {
 					return  item => {
 						return item == null || typeof item !== 'object';
 					};
@@ -169,12 +159,10 @@
 		 *
 		 * @return {void}
 		 */
-		created: function () {
+		created() {
 			this._cache = {};
 			this._elements = [];
 			this._elementsBuffer = 3;
-			this._spawn = this._spawn.bind(this);
-			this._spawnSteps = Array(this._elementsBuffer).fill(this._createInstance);
 		},
 
 		/**
@@ -182,7 +170,7 @@
 		 *
 		 * @return {void}
 		 */
-		attached: function () {
+		attached() {
 			this._observer = Polymer.dom(this).observeNodes(this._onNodesChange);
 		},
 
@@ -191,7 +179,7 @@
 		 *
 		 * @return {void}
 		 */
-		detached: function () {
+		detached() {
 			if (this._observer) {
 				Polymer.dom(this).unobserveNodes(this._observer);
 				this._observer = null;
@@ -212,35 +200,19 @@
 
 			this._userTemplate = template;
 			this._ensureTemplatized();
-			_asyncPeriod(this._spawn, 10);
+
+			Array(this._elementsBuffer).fill(null).forEach(this._createElement, this);
 
 		},
 
-		_spawn() {
-			if (!this.isAttached) {
-				return;
-			}
-			const step = this._spawnSteps.shift();
-			if (!step) {
-				return;
-			}
-			step.call(this);
-			_asyncPeriod(this._spawn, 10);
-		},
-
-		_createInstance() {
-			const instance = this.stamp({}),
-				elements = this._elements,
+		_createElement() {
+			const elements = this._elements,
 				index = elements.length,
 				element = document.createElement('div');
 
-			element.classList.add('animatable');
-			element.__instance = instance;
-
-			this._templateInstances.push(instance);
+			element.classList.add('animatable', 'incomplete');
 			elements.push(element);
 
-			Polymer.dom(element).appendChild(instance.root);
 			Polymer.dom(this).appendChild(element);
 
 			if (this.selected != null && index === this.selected) {
@@ -251,7 +223,7 @@
 			this._forwardItem(element, this.items[index]);
 		},
 
-		_ensureTemplatized: function () {
+		_ensureTemplatized() {
 			if (this.ctor || !this._userTemplate) {
 				return;
 			}
@@ -290,7 +262,7 @@
 		 * @param  {Object} item The full data of object
 		 * @return {void}
 		 */
-		setItemById: function (id, item) {
+		setItemById(id, item) {
 			const index = this.items.indexOf(id);
 
 			if (index < 0) {
@@ -311,7 +283,7 @@
 			this._synchronize();
 		},
 
-		_forwardParentProp: function (prop, value) {
+		_forwardParentProp(prop, value) {
 			const instances = this._templateInstances;
 			if (!instances || !instances.length) {
 				return;
@@ -319,7 +291,7 @@
 			instances.forEach(inst => inst[prop] = value);
 		},
 
-		_forwardParentPath: function (path, value) {
+		_forwardParentPath(path, value) {
 			const instances = this._templateInstances;
 			if (!instances || !instances.length) {
 				return;
@@ -327,7 +299,7 @@
 			instances.forEach(inst => inst.notifyPath(path, value, true));
 		},
 
-		_forwardHostPropV2: function (prop, value) {
+		_forwardHostPropV2(prop, value) {
 			const instances = this._templateInstances;
 			if (!instances || !instances.length) {
 				return;
@@ -368,7 +340,7 @@
 		 * @param  {Number} selected The selected property
 		 * @return {void}
 		 */
-		_updateSelected: function (selected = this.selected) {
+		_updateSelected(selected = this.selected) {
 			this._setSelectedNext((this.selected || 0) + 1);
 			this._setPrevDisabled(this.selected === 0);
 			this._setNextDisabled(this.selectedNext >= this.items.length);
@@ -461,26 +433,44 @@
 		 * @param  {Object}      item     The item to forward
 		 * @return {void}
 		 */
-		_forwardItem: function (element, item) {
+		_forwardItem(element, item) {
 			const items = this.items,
 				index = items.indexOf(item),
-				instance = element.__instance,
 				incomplete = this.isIncompleteFn(item);
 
-			if (!instance) {
+			element.classList.toggle('incomplete', incomplete);
+
+			if (incomplete || element.item === item) {
 				return;
 			}
+
+			this._removeInstance(element.__instance);
+
+			let instance = this.stamp({});
+
 
 			instance[this.indexAs] = Math.max(index, 0);
 			instance['prevDisabled'] = index < 1;
 			instance['nextDisabled'] = index + 1  >= items.length;
 
-			element.classList.toggle('incomplete', incomplete);
+			instance[this.as] = item;
+			element.__instance = instance;
+			element.item = item;
 
-			if (incomplete || instance[this.as] === item) {
+			Polymer.dom(element).appendChild(instance.root);
+		},
+
+		_removeInstance(instance) {
+			if (!instance) {
 				return;
 			}
-			instance[this.as] = item;
+			const children = IS_V2 ? instance.children : instance._children;
+
+			for (let i = 0; i < children.length; i++) {
+				const child = children[i],
+					parent = child.parentNode;
+				Polymer.dom(parent).removeChild(child);
+			}
 		},
 
 		/**
@@ -490,7 +480,7 @@
 		 * @param  {Event} event The tap event
 		 * @return {void}
 		 */
-		_onTap: function (event) {
+		_onTap(event) {
 			if (this.animating) {
 				return;
 			}
@@ -584,7 +574,7 @@
 		 * @param  {String|Number} id The item's id
 		 * @return {void}
 		 */
-		selectById: function (id) {
+		selectById(id) {
 			var index,
 				item;
 			for (index = 0; index < this.items.length; index++) {
@@ -602,7 +592,7 @@
 		*
 		* @return {type}  description
 		*/
-		_synchronize: function () {
+		_synchronize() {
 			const elements = this._elements,
 				buffer = this._elementsBuffer,
 				offset = buffer / 2 >> 0,
