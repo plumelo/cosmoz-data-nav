@@ -317,6 +317,8 @@
 		_itemsChanged(items) {
 			const length = items && items.length;
 
+			this._isPreloading = false;
+
 			//Update readOnly queueLength
 			this._setQueueLength(length >> 0);
 
