@@ -307,6 +307,31 @@
 			instances.forEach(inst => inst.forwardHostProp(prop, value));
 		},
 
+		_forwardInstanceProp: function (inst, prop, value) {
+			const items = this.items,
+				index = inst.index;
+			if (prop !== this.as || value === items[index]) {
+				return;
+			}
+			this.removeFromCache(items[index]);
+			this.set(['items', index], value);
+		},
+
+		clearCache() {
+			this._cache = {};
+		},
+
+		removeFromCache(item) {
+			if (item == null) {
+				return;
+			}
+			const cache = this._cache,
+				key = Object.keys(cache).find(k => cache[k] === item);
+			if (key != null) {
+				delete cache[key];
+			}
+		},
+
 		/**
 		 * Observes full changes to `items` properties
 		 * and replaces cached items with full data if available.
@@ -438,18 +463,21 @@
 		_forwardItem(element, item) {
 			const items = this.items,
 				index = items.indexOf(item),
-				incomplete = this.isIncompleteFn(item);
+				incomplete = this.isIncompleteFn(item),
+				currentInstance = element.__instance;
 
 			element.classList.toggle('incomplete', incomplete);
 
-			if (incomplete || element.item === item) {
+			if (currentInstance && (incomplete || element.item === item)) {
+				currentInstance[this.indexAs] = Math.max(index, 0);
+				currentInstance['prevDisabled'] = index < 1;
+				currentInstance['nextDisabled'] = index + 1  >= items.length;
 				return;
 			}
 
-			this._removeInstance(element.__instance);
+			this._removeInstance(currentInstance);
 
 			let instance = this.stamp({});
-
 
 			instance[this.indexAs] = Math.max(index, 0);
 			instance['prevDisabled'] = index < 1;

@@ -13,7 +13,9 @@
 
 		<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
 		<link rel="import" href="../../paper-spinner/paper-spinner-lite.html">
+		<link rel="import" href="../../paper-input/paper-textarea.html">
 		<link rel="import" href="../../iron-icons/iron-icons.html" />
+		<link rel="import" href="./helpers/cosmoz-demo-view.html" />
 		<link rel="import" href="../cosmoz-data-nav.html" />
 
 		<custom-style>
@@ -26,11 +28,6 @@
 					height: 400px;
 					position: relative;
 				}
-				.text {
-					font-size: 300px;
-					line-height: 360px;
-					text-align: center;
-				}
 			</style>
 		</custom-style>
 	</head>
@@ -41,16 +38,9 @@
 				<template>
 					<dom-bind id="basic">
 						<template is="dom-bind">
-							<cosmoz-data-nav items="[[ items ]]" index-as="index" item-as="item" on-need-data="onNeedData">
+							<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}">
 								<template>
-									<div class="fit layout vertical" style$="background-color: {{ computeColor(index) }}">
-										<div class="flex text">{{ item.id }}</div>
-										<div>
-											<paper-icon-button slot="actions" disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
-											<span>[[index]]</span>
-											<paper-icon-button slot="actions" disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
-										</div>
-									</div>
+									<cosmoz-demo-view class="fit layout vertical" style$="background-color: {{ computeColor(index) }}" item="{{ item }}" index="[[index]]"></cosmoz-demo-view>
 									<div incomplete-content class="layout vertical center-justified">
 										<div class="layout horizontal center-justified center">
 											<paper-spinner-lite active></paper-spinner-lite>
@@ -66,6 +56,7 @@
 									</div>
 								</template>
 							</cosmoz-data-nav>
+							<paper-textarea value="{{ computeJSON(selected, items.*) }}"><paper-textarea>
 						</template>
 					</dom-bind>
 				</template>
@@ -88,9 +79,12 @@
 					}, 5000);
 					return { id: detail.id };
 				};
+				basic.computeJSON = function (index) {
+					return JSON.stringify(this.items[index]);
+				};
 				basic.set('items', items);
-
 			});
+
 			///
 		})();
 		</script>
