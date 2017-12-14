@@ -3,7 +3,19 @@
 
 (function () {
 	'use strict';
-	const IS_V2 = Polymer.flush != null;
+	const _async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
+		_hasDeadline = 'IdleDeadline' in window,
+		_asyncPeriod = (cb, minimum = 5) =>
+			_async(deadline => {
+				if (_hasDeadline && deadline != null) {
+					const _isDeadline = deadline instanceof window.IdleDeadline;
+					if (_isDeadline && deadline.timeRemaining() < minimum) {
+						return _asyncPeriod(cb, minimum);
+					}
+				}
+				cb();
+			}),
+		IS_V2 = Polymer.flush != null;
 
 	Polymer({
 		is: 'cosmoz-data-nav',
@@ -27,31 +39,11 @@
 			},
 
 			/**
-			 * True if first item is selected.
-			 */
-			nextDisabled: {
-				type: Boolean,
-				notify: true,
-				readOnly: true,
-				value: true
-			},
-
-			/**
-			 *  True if last item is selected.
-			 */
-			prevDisabled: {
-				type: Boolean,
-				notify: true,
-				readOnly: true,
-				value: true
-			},
-
-			/**
 			 * An array containing items from which a selection can be made.
 			 */
 			items: {
 				type: Array,
-				value: function () {
+				value() {
 					return [];
 				},
 				notify: true,
@@ -145,7 +137,6 @@
 		},
 
 		behaviors: [
-			Polymer.Templatizer,
 			Polymer.IronResizableBehavior
 		],
 
@@ -163,6 +154,8 @@
 			this._cache = {};
 			this._elements = [];
 			this._elementsBuffer = 3;
+			this._spawn = this._spawn.bind(this);
+			this._spawnSteps = Array(this._elementsBuffer).fill(this._createElement);
 		},
 
 		/**
@@ -171,7 +164,7 @@
 		 * @return {void}
 		 */
 		attached() {
-			this._observer = Polymer.dom(this).observeNodes(this._onNodesChange);
+			this._templatesObserver = Polymer.dom(this.$.templatesSlot).observeNodes(this._onTemplatesChange.bind(this));
 		},
 
 		/**
@@ -180,39 +173,117 @@
 		 * @return {void}
 		 */
 		detached() {
-			if (this._observer) {
-				Polymer.dom(this).unobserveNodes(this._observer);
-				this._observer = null;
+			if (this._templatesObserver) {
+				Polymer.dom(this).unobserveNodes(this._templatesObserver);
+				this._templatesObserver = null;
 			}
 			this._cache = {};
 		},
 
-		_onNodesChange() {
-			if (this._userTemplate) {
+		_onTemplatesChange(change) {
+			if (this._elementTemplate) {
 				return;
 			}
-			const template = this.queryEffectiveChildren('template');
+			const templates = change.addedNodes.filter(n => n.nodeType === Node.ELEMENT_NODE && n.tagName === 'TEMPLATE'),
+				elementTemplate = templates.find(n => n.matches(':not([incomplete])')),
+				incompleteTemplate = templates.find(n => n.matches('[incomplete]')) || this.$.incompleteTemplate;
 
-			if (!template) {
+			if (!elementTemplate) {
 				console.warn('cosmoz-data-nav requires a template');
 				return;
 			}
+			this._templatize(elementTemplate, incompleteTemplate);
+			_asyncPeriod(this._spawn, 10);
+		},
 
-			this._userTemplate = template;
-			this._ensureTemplatized();
+		_templatize(elementTemplate, incompleteTemplate) {
+			this._elementTemplate = elementTemplate;
+			this._incompleteTemplate = incompleteTemplate;
 
-			Array(this._elementsBuffer).fill(null).forEach(this._createElement, this);
+			let baseProps = {
+				prevDisabled: true,
+				nextDisabled: true,
+				[this.indexAs]: true
+			};
+			this._elementCtor = Cosmoz.Templatize.templatize(this._elementTemplate, this, {
+				instanceProps: Object.assign({[this.as]: true}, baseProps),
+				parentModel: true,
+				forwardParentProp: this._forwardHostProp,
+				forwardParentPath: this._forwardParentPath,
+				forwardHostProp: this._forwardHostProp,
+				forwardInstanceProp: this._notifyInstanceProp,
+				notifyInstanceProp: this._notifyInstanceProp
+			});
+			this._incompleteCtor = Cosmoz.Templatize.templatize(this._incompleteTemplate, this, {
+				instanceProps: baseProps,
+				parentModel: true,
+				forwardParentProp: this._forwardHostProp,
+				forwardParentPath: this._forwardParentPath,
+				forwardHostProp: this._forwardHostProp,
+			});
+		},
 
+		get _allInstances() {
+			return this._elements
+				.reduce((p, n) => p.concat([n.__instance, n.__incomplete]), [])
+				.filter(i => i != null);
+		},
+		get _allElementInstances() {
+			return this._elements
+				.map(e => e.__instance)
+				.filter(i => i != null);
+		},
+
+		_forwardParentPath(path, value) {
+			const instances = this._allInstances;
+			if (!instances || !instances.length) {
+				return;
+			}
+			instances.forEach(inst => inst.notifyPath(path, value, true));
+		},
+
+		_forwardHostProp(prop, value) {
+			const instances = this._allInstances;
+			if (!instances || !instances.length) {
+				return;
+			}
+			instances.forEach(inst => IS_V2 ? inst.forwardHostProp(prop, value) : inst[prop] = value);
+		},
+
+		_notifyInstanceProp(inst, prop, value) {
+			const items = this.items,
+				index = inst.index;
+			if (prop !== this.as || value === items[index] || this._allElementInstances.indexOf(inst) < 0) {
+				return;
+			}
+			this.removeFromCache(items[index]);
+			this.set(['items', index], value);
+		},
+
+		_spawn() {
+			if (!this.isAttached) {
+				return;
+			}
+			const step = this._spawnSteps.shift();
+			if (!step) {
+				return;
+			}
+			step.call(this);
+			_asyncPeriod(this._spawn, 10);
 		},
 
 		_createElement() {
 			const elements = this._elements,
 				index = elements.length,
-				element = document.createElement('div');
+				element = document.createElement('div'),
+				incomplete = new this._incompleteCtor({});
 
+			element.setAttribute('slot', 'items');
 			element.classList.add('animatable', 'incomplete');
+			element.__incomplete = incomplete;
 			elements.push(element);
 
+			Polymer.dom(element).appendChild(incomplete.root);
 			Polymer.dom(this).appendChild(element);
 
 			if (this.selected != null && index === this.selected) {
@@ -221,23 +292,6 @@
 				return;
 			}
 			this._forwardItem(element, this.items[index]);
-		},
-
-		_ensureTemplatized() {
-			if (this.ctor || !this._userTemplate) {
-				return;
-			}
-			const props =  {
-				prevDisabled: true,
-				nextDisabled: true
-			};
-			props[this.as] = true;
-			props[this.indexAs] = true;
-
-			this._instanceProps = props;
-			this._parentModel = true;
-			this._templateInstances = [];
-			this.templatize(this._userTemplate);
 		},
 
 		/**
@@ -281,40 +335,6 @@
 				return this._updateSelected();
 			}
 			this._synchronize();
-		},
-
-		_forwardParentProp(prop, value) {
-			const instances = this._templateInstances;
-			if (!instances || !instances.length) {
-				return;
-			}
-			instances.forEach(inst => inst[prop] = value);
-		},
-
-		_forwardParentPath(path, value) {
-			const instances = this._templateInstances;
-			if (!instances || !instances.length) {
-				return;
-			}
-			instances.forEach(inst => inst.notifyPath(path, value, true));
-		},
-
-		_forwardHostPropV2(prop, value) {
-			const instances = this._templateInstances;
-			if (!instances || !instances.length) {
-				return;
-			}
-			instances.forEach(inst => inst.forwardHostProp(prop, value));
-		},
-
-		_forwardInstanceProp: function (inst, prop, value) {
-			const items = this.items,
-				index = inst.index;
-			if (prop !== this.as || value === items[index]) {
-				return;
-			}
-			this.removeFromCache(items[index]);
-			this.set(['items', index], value);
 		},
 
 		clearCache() {
@@ -369,8 +389,6 @@
 		 */
 		_updateSelected(selected = this.selected) {
 			this._setSelectedNext((this.selected || 0) + 1);
-			this._setPrevDisabled(this.selected === 0);
-			this._setNextDisabled(this.selectedNext >= this.items.length);
 
 			const element =  this._elements[selected % this._elementsBuffer];
 
@@ -419,8 +437,8 @@
 				const classes = el.classList;
 				classes.remove('in', 'out');
 			});
-			this._notifyElementResize(this._selectedElement);
 			this._synchronize();
+			this._notifyElementResize(this._selectedElement);
 			this._preload();
 		},
 
@@ -464,30 +482,32 @@
 			const items = this.items,
 				index = items.indexOf(item),
 				incomplete = this.isIncompleteFn(item),
-				currentInstance = element.__instance;
+				incompleteInstance = element.__incomplete,
+				currentInstance = element.__instance,
+				baseProps = {
+					prevDisabled: index < 1,
+					nextDisabled: index + 1  >= items.length,
+					[this.indexAs]: Math.max(index, 0)
+				};
 
-			element.classList.toggle('incomplete', incomplete);
-
+			incompleteInstance._showHideChildren(!incomplete);
+			Object.assign(incompleteInstance, baseProps);
 			if (currentInstance && (incomplete || element.item === item)) {
-				currentInstance[this.indexAs] = Math.max(index, 0);
-				currentInstance['prevDisabled'] = index < 1;
-				currentInstance['nextDisabled'] = index + 1  >= items.length;
+				currentInstance._showHideChildren(incomplete);
+				Object.assign(currentInstance, baseProps);
 				return;
 			}
 
 			this._removeInstance(currentInstance);
 
-			let instance = this.stamp({});
+			let instance = new this._elementCtor({});
+			Object.assign(instance, incomplete ? {} : { [this.as]: item }, baseProps);
 
-			instance[this.indexAs] = Math.max(index, 0);
-			instance['prevDisabled'] = index < 1;
-			instance['nextDisabled'] = index + 1  >= items.length;
-
-			instance[this.as] = item;
 			element.__instance = instance;
 			element.item = item;
 
 			Polymer.dom(element).appendChild(instance.root);
+			instance._showHideChildren(incomplete);
 		},
 
 		_removeInstance(instance) {
@@ -515,13 +535,22 @@
 				return;
 			}
 			const path = Polymer.dom(event).path,
-				attr = this.selectAttribute;
+				attr = this.selectAttribute,
+				selectEl = path.find(e => e && e.hasAttribute && e.hasAttribute(attr));
 
-			let select = path.find(e => e && e.hasAttribute && e.hasAttribute(attr));
-			if (!select || select.closest(this.is) !== this) {
+			if (!selectEl) {
 				return;
 			}
-			select = parseInt(select.getAttribute(attr), 10);
+			let inBetween = path.slice(path.indexOf(selectEl)),
+				ancestorNav = inBetween.find(e => e.is && e.is === this.is),
+				select;
+
+			if (ancestorNav !== this) {
+				return;
+			}
+
+			select = parseInt(selectEl.getAttribute(attr), 10);
+
 			if (isNaN(select)) {
 				return;
 			}
@@ -575,7 +604,6 @@
 			Polymer.IronResizableBehavior.notifyResize.call(this);
 		},
 
-
 		/**
 		 * Notifies a descendant resizable of the element.
 		 *
@@ -586,9 +614,20 @@
 			if (!this.isAttached) {
 				return;
 			}
-			const resizable = this._interestedResizables.find(resizable =>
-				resizable.closest('.animatable') === element
-			);
+			const	resizable = this._interestedResizables.find(resizable => {
+				const instance = element.__instance,
+					children = IS_V2 ? instance.children : instance._children;
+				return Array.prototype.some.call(children, child => {
+					let parent = resizable;
+					while (parent && parent !== this) {
+						if (parent === child) {
+							return true;
+						}
+						parent = parent.parentNode;
+					}
+					return false;
+				});
+			});
 
 			if (!resizable) {
 				return;
