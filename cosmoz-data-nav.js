@@ -5,7 +5,7 @@
 	'use strict';
 	const _async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
 		_hasDeadline = 'IdleDeadline' in window,
-		_asyncPeriod = (cb, minimum = 5) =>
+		_asyncPeriod = (cb, minimum = 16) =>
 			_async(deadline => {
 				if (_hasDeadline && deadline != null) {
 					const _isDeadline = deadline instanceof window.IdleDeadline;
@@ -15,7 +15,17 @@
 				}
 				cb();
 			}),
-		IS_V2 = Polymer.flush != null;
+		IS_V2 = Polymer.flush != null,
+		_doAsyncSteps = (steps, minDeadline = 16) => {
+			if (!Array.isArray(steps) || steps.length < 1) {
+				return;
+			}
+			const step = steps.shift();
+			_asyncPeriod(() => {
+				step();
+				_doAsyncSteps(steps, minDeadline);
+			}, minDeadline);
+		};
 
 	Polymer({
 		is: 'cosmoz-data-nav',
@@ -59,12 +69,17 @@
 				readOnly: true
 			},
 
+			elementsBuffer: {
+				type: Number,
+				value: 3
+			},
+
 			/**
 			 * Number of items after the currently selected one to preload.
 			 */
 			preload: {
 				type: Number,
-				value: 2
+				value: 1
 			},
 
 			/**
@@ -129,9 +144,7 @@
 			isIncompleteFn: {
 				type: Function,
 				value() {
-					return  item => {
-						return item == null || typeof item !== 'object';
-					};
+					return item => item == null || typeof item !== 'object';
 				}
 			}
 		},
@@ -153,9 +166,6 @@
 		created() {
 			this._cache = {};
 			this._elements = [];
-			this._elementsBuffer = 3;
-			this._spawn = this._spawn.bind(this);
-			this._spawnSteps = Array(this._elementsBuffer).fill(this._createElement);
 		},
 
 		/**
@@ -193,7 +203,9 @@
 				return;
 			}
 			this._templatize(elementTemplate, incompleteTemplate);
-			_asyncPeriod(this._spawn, 10);
+
+			const steps = Array(this.elementsBuffer).fill(this._createElement.bind(this));
+			_doAsyncSteps(steps);
 		},
 
 		_templatize(elementTemplate, incompleteTemplate) {
@@ -260,19 +272,11 @@
 			this.set(['items', index], value);
 		},
 
-		_spawn() {
-			if (!this.isAttached) {
-				return;
-			}
-			const step = this._spawnSteps.shift();
-			if (!step) {
-				return;
-			}
-			step.call(this);
-			_asyncPeriod(this._spawn, 10);
-		},
-
 		_createElement() {
+			if (this._elements.length >= this.elementsBuffer) {
+				return;
+			}
+
 			const elements = this._elements,
 				index = elements.length,
 				element = document.createElement('div'),
@@ -291,7 +295,7 @@
 				this._updateSelected();
 				return;
 			}
-			this._forwardItem(element, this.items[index]);
+			this._synchronize();
 		},
 
 		/**
@@ -390,7 +394,7 @@
 		_updateSelected(selected = this.selected) {
 			this._setSelectedNext((this.selected || 0) + 1);
 
-			const element =  this._elements[selected % this._elementsBuffer];
+			const element = this._elements[selected % this.elementsBuffer];
 
 			if (!element) {
 				return;
@@ -471,6 +475,34 @@
 			this._preload();
 		},
 
+		_getBaseProps(index) {
+			return {
+				prevDisabled: index < 1,
+				nextDisabled: index + 1  >= this.items.length,
+				[this.indexAs]: Math.max(index, 0)
+			};
+		},
+
+		_toggleInstance(element, index, incomplete) {
+			if (element.__instanceActive === !incomplete) {
+				return;
+			}
+
+			const baseProps = this._getBaseProps(index);
+
+			element.__instanceActive = !incomplete;
+
+			if (element.__incomplete) {
+				element.__incomplete._showHideChildren(!incomplete);
+				Object.assign(element.__incomplete, baseProps);
+			}
+
+			if (element.__instance) {
+				element.__instance._showHideChildren(incomplete);
+				Object.assign(element.__instance, baseProps);
+			}
+		},
+
 		/**
 		 * Forwards an item from `items` property to a template instance.
 		 *
@@ -479,35 +511,24 @@
 		 * @return {void}
 		 */
 		_forwardItem(element, item) {
-			const items = this.items,
-				index = items.indexOf(item),
-				incomplete = this.isIncompleteFn(item),
-				incompleteInstance = element.__incomplete,
-				currentInstance = element.__instance,
-				baseProps = {
-					prevDisabled: index < 1,
-					nextDisabled: index + 1  >= items.length,
-					[this.indexAs]: Math.max(index, 0)
-				};
-
-			incompleteInstance._showHideChildren(!incomplete);
-			Object.assign(incompleteInstance, baseProps);
-			if (currentInstance && (incomplete || element.item === item)) {
-				currentInstance._showHideChildren(incomplete);
-				Object.assign(currentInstance, baseProps);
+			if (element.item === item) {
+				// already rendered
 				return;
 			}
 
-			this._removeInstance(currentInstance);
+			this._removeInstance(element.__instance);
 
-			let instance = new this._elementCtor({});
-			Object.assign(instance, incomplete ? {} : { [this.as]: item }, baseProps);
+			const items = this.items,
+				index = items.indexOf(item),
+				instance = new this._elementCtor({});
+
+			Object.assign(instance, { [this.as]: item }, this._getBaseProps(index));
 
 			element.__instance = instance;
 			element.item = item;
 
 			Polymer.dom(element).appendChild(instance.root);
-			instance._showHideChildren(incomplete);
+			instance._showHideChildren(false);
 		},
 
 		_removeInstance(instance) {
@@ -614,20 +635,26 @@
 			if (!this.isAttached) {
 				return;
 			}
-			const	resizable = this._interestedResizables.find(resizable => {
-				const instance = element.__instance,
-					children = IS_V2 ? instance.children : instance._children;
-				return Array.prototype.some.call(children, child => {
-					let parent = resizable;
-					while (parent && parent !== this) {
-						if (parent === child) {
-							return true;
+
+			const instance = element.__instance;
+
+			if (instance == null) {
+				return;
+			}
+
+			const children = IS_V2 ? instance.children : instance._children,
+				resizable = this._interestedResizables.find(resizable => {
+					return Array.prototype.some.call(children, child => {
+						let parent = resizable;
+						while (parent && parent !== this) {
+							if (parent === child) {
+								return true;
+							}
+							parent = parent.parentNode;
 						}
-						parent = parent.parentNode;
-					}
-					return false;
+						return false;
+					});
 				});
-			});
 
 			if (!resizable) {
 				return;
@@ -662,24 +689,92 @@
 		* @return {type}  description
 		*/
 		_synchronize() {
-			const elements = this._elements,
-				buffer = this._elementsBuffer,
+			if (this._elements == null || this.elementsBuffer == null) {
+				return;
+			}
+			const buffer = this.elementsBuffer,
 				offset = buffer / 2 >> 0,
 				max = Math.max,
 				min = Math.min,
 				length = this.items.length,
-				end = max(min(this.selected + offset, length ? length - 1 : 0), buffer - 1);
+				end = max(min(this.selected + offset, length ? length - 1 : 0), buffer - 1),
+				index = min(max(this.selected - offset, 0), length ? length - buffer : 0),
+				numSteps = end - index + 1;
 
-			let index = min(max(this.selected - offset, 0), length ? length - buffer : 0);
+			this._indexRenderQueue = Array(numSteps).fill().map((u, idx) => index + idx);
+			this._renderQueue();
+		},
 
-			for (; index <= end; index++) {
-				let element = elements[ index % buffer],
-					item =  this.items[index];
-				if (!element) {
-					continue;
-				}
-				this._forwardItem(element, item);
+		_renderQueue() {
+
+			const queue = this._indexRenderQueue;
+
+			if (!Array.isArray(queue) || queue.length < 1) {
+				// no tasks in queue
+				return;
 			}
+
+			if (!Array.isArray(this._elements) || this._elements.length < 1) {
+				// no elements to render to
+				// will be re-run when elements are created
+				return;
+			}
+
+			if (this.animating) {
+				// will be re-run on transition end
+				return;
+			}
+
+			let renderRun = false,
+				reRun = true;
+
+			this._indexRenderQueue = queue
+				.sort((a, b) => a === this.selected ? -1 : b === this.selected ? 1 : 0)
+				.map(idx => {
+
+					const elementIndex = idx % this.elementsBuffer,
+						element = this._elements[elementIndex],
+						item = this.items[idx];
+
+					if (!element) {
+						// don't re-run _renderQueue()
+						// will be re-run when elements are created
+						reRun = false;
+						// maintain task in queue
+						return idx;
+					}
+
+					const incomplete = this.isIncompleteFn(item);
+					this._toggleInstance(element, idx, incomplete);
+
+					if (incomplete) {
+						// no data for item, instance has been toggled
+						// drop task from queue
+						return;
+					}
+
+					if (element.item === item) {
+						// already rendered
+						// drop task from queue
+						return;
+					}
+
+					if (renderRun) {
+						// one render per run
+						// maintain task in queue
+						return idx;
+					}
+
+					this._forwardItem(element, item);
+					renderRun = true;
+				})
+				.filter(idx => idx != null);
+
+			if (!reRun) {
+				return;
+			}
+
+			_asyncPeriod(this._renderQueue.bind(this));
 		}
 	});
 }());
