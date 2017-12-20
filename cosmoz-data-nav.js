@@ -3,7 +3,8 @@
 
 (function () {
 	'use strict';
-	const _async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
+	const IS_V2 = Polymer.flush != null,
+		_async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
 		_hasDeadline = 'IdleDeadline' in window,
 		_asyncPeriod = (cb, minimum = 16) =>
 			_async(deadline => {
@@ -15,16 +16,16 @@
 				}
 				cb();
 			}),
-		IS_V2 = Polymer.flush != null,
 		_doAsyncSteps = (steps, minDeadline = 16) => {
-			if (!Array.isArray(steps) || steps.length < 1) {
-				return;
-			}
-			const step = steps.shift();
-			_asyncPeriod(() => {
+			const callStep = () => {
+				if (!Array.isArray(steps) || steps.length < 1) {
+					return;
+				}
+				const step = steps.shift();
 				step();
-				_doAsyncSteps(steps, minDeadline);
-			}, minDeadline);
+				_asyncPeriod(callStep, minDeadline);
+			};
+			return _asyncPeriod(callStep, minDeadline);
 		};
 
 	Polymer({
