@@ -205,6 +205,11 @@
 			this._templatize(elementTemplate, incompleteTemplate);
 
 			const steps = Array(this.elementsBuffer).fill(this._createElement.bind(this));
+
+			if (this._isVisible) {
+				steps.shift().call();
+			}
+
 			_doAsyncSteps(steps);
 		},
 
