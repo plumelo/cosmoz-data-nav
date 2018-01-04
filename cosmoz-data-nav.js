@@ -594,14 +594,49 @@
 			return Boolean(this.offsetWidth || this.offsetHeight);
 		},
 
+		_isDescendantOf(descendant, ancestor, limit = this) {
+			let parent = descendant;
+			while (parent && parent !== limit) {
+				if (parent === ancestor) {
+					return true;
+				}
+				parent = parent.parentNode;
+				if (parent == null) {
+					parent = parent instanceof ShadowRoot && parent.host;
+				}
+			}
+			return false;
+		},
+
+		/**
+		 * Check if a element is a descendant of another element
+		 * @param {HTMLElement} descendant Element to test
+		 * @param {HTMLElement} element Ancestor element
+		 * @returns {Boolean} True if  element is a descendant
+		 */
+		_isDescendantOfElementInstance(descendant, element) {
+			if (!element) {
+				return false;
+			}
+			const instance = element.__instance;
+
+			if (!instance) {
+				return false;
+			}
+
+			return Array.from(IS_V2 ? instance.children : instance._children)
+				.filter(c => c.nodeType === Node.ELEMENT_NODE)
+				.some(child => this._isDescendantOf(descendant, child));
+		},
+
 		/**
 		 * Check if a element is a descendant of the currently selected element.
 		 *
-		 * @param  {HTMLElement} element A descendant resizable element
+		 * @param  {HTMLElement} resizable A descendant resizable element
 		 * @return {Boolean} True if the element should be notified
 		 */
-		resizerShouldBeNotified(element) {
-			return element.closest('.animatable')  === this._selectedElement;
+		resizerShouldBeNotified(resizable) {
+			return this._isDescendantOfElementInstance(resizable, this._selectedElement);
 		},
 
 
@@ -620,7 +655,6 @@
 			if (Polymer.Settings.useShadow && event.target.domHost === this) {
 				return;
 			}
-
 			this._fireResize();
 		},
 
@@ -631,42 +665,36 @@
 			Polymer.IronResizableBehavior.notifyResize.call(this);
 		},
 
+		resizerShouldNotify() {
+			return false; //handle resize manually
+		},
+
 		/**
 		 * Notifies a descendant resizable of the element.
 		 *
 		 * @param  {HTMLElement} element The element to search within for a resizable
-		 * @return {void}
+		 * @return {Boolean} True if descendant has been notified.
 		 */
-		_notifyElementResize(element) {
-			if (!this.isAttached) {
-				return;
+		_notifyElementResize(element = this._selectedElement) {
+			if (!this.isAttached || !element) {
+				return false;
 			}
 
 			const instance = element.__instance;
 
-			if (instance == null) {
-				return;
+			if (instance == null || instance.__resized) {
+				return false;
 			}
 
-			const children = IS_V2 ? instance.children : instance._children,
-				resizable = this._interestedResizables.find(resizable => {
-					return Array.prototype.some.call(children, child => {
-						let parent = resizable;
-						while (parent && parent !== this) {
-							if (parent === child) {
-								return true;
-							}
-							parent = parent.parentNode;
-						}
-						return false;
-					});
-				});
+			const resizable = this._interestedResizables
+				.find(resizable => this._isDescendantOfElementInstance(resizable, element));
 
 			if (!resizable) {
-				return;
+				return false;
 			}
 
 			this._notifyDescendant(resizable);
+			return instance.__resized = true;
 		},
 
 		/**
