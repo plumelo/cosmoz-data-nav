@@ -247,6 +247,7 @@
 				.reduce((p, n) => p.concat([n.__instance, n.__incomplete]), [])
 				.filter(i => i != null);
 		},
+
 		get _allElementInstances() {
 			return this._elements
 				.map(e => e.__instance)
@@ -297,12 +298,12 @@
 			Polymer.dom(element).appendChild(incomplete.root);
 			Polymer.dom(this).appendChild(element);
 
-			if (this.selected != null && index === this.selected) {
-				this.animating = false;
-				this._updateSelected();
+			if (this.selected == null || this.selected !== index) {
 				return;
 			}
-			this._synchronize();
+			this.animating = false;
+			this._updateSelected();
+
 		},
 
 		/**
@@ -339,13 +340,14 @@
 			this._isPreloading = false;
 			this._preload();
 
-			if (this.animating) {
+			if (this.animating || this.selected == null) {
 				return;
 			}
-			if (index === this.selected) {
-				return this._updateSelected();
+			if (this.selected !== index) {
+				return this._synchronize();
 			}
-			this._synchronize();
+
+			this._updateSelected();
 		},
 
 		clearCache() {
@@ -387,7 +389,6 @@
 			}
 
 			this.selected = this._preloadIdx = 0;
-			this._synchronize();
 			this._preload();
 		},
 
@@ -399,9 +400,9 @@
 		 * @return {void}
 		 */
 		_updateSelected(selected = this.selected) {
-			this._setSelectedNext((this.selected || 0) + 1);
+			this._setSelectedNext((selected || 0) + 1);
 
-			const element = this._elements[selected % this.elementsBuffer];
+			const element = this._getElement(selected);
 
 			if (!element) {
 				return;
@@ -417,7 +418,6 @@
 
 			if (!this.animating) {
 				this._synchronize();
-				this._notifyElementResize(this._selectedElement);
 				return;
 			}
 
@@ -444,12 +444,8 @@
 			}
 
 			this.animating = false;
-			this._elements.forEach(el => {
-				const classes = el.classList;
-				classes.remove('in', 'out');
-			});
+			this._elements.forEach(el => el.classList.remove('in', 'out'));
 			this._synchronize();
-			this._notifyElementResize(this._selectedElement);
 			this._preload();
 		},
 
@@ -490,52 +486,37 @@
 			};
 		},
 
-		_toggleInstance(element, index, incomplete) {
-			if (element.__instanceActive === !incomplete) {
-				return;
-			}
-
-			const baseProps = this._getBaseProps(index);
-
-			element.__instanceActive = !incomplete;
-
-			if (element.__incomplete) {
-				element.__incomplete._showHideChildren(!incomplete);
-				Object.assign(element.__incomplete, baseProps);
-			}
-
-			if (element.__instance) {
-				element.__instance._showHideChildren(incomplete);
-				Object.assign(element.__instance, baseProps);
-			}
+		_getElement(index) {
+			return this._elements[index % this.elementsBuffer];
 		},
 
-		/**
-		 * Forwards an item from `items` property to a template instance.
-		 *
-		 * @param  {HTMLElement} element The element
-		 * @param  {Object}      item     The item to forward
-		 * @return {void}
-		 */
-		_forwardItem(element, item) {
-			if (element.item === item) {
-				// already rendered
+		_resetElement(index) {
+			const element = this._getElement(index);
+
+			if (!element || element._reset) {
 				return;
 			}
 
-			this._removeInstance(element.__instance);
+			const item = this.items[index];
 
-			const items = this.items,
-				index = items.indexOf(item),
-				instance = new this._elementCtor({});
+			if (!this.isIncompleteFn(item) && element.item === item) {
+				return;
+			}
+			element._reset = true;
 
-			Object.assign(instance, { [this.as]: item }, this._getBaseProps(index));
+			const baseProps = this._getBaseProps(index),
+				incomplete = element.__incomplete,
+				instance = element.__instance;
 
-			element.__instance = instance;
-			element.item = item;
+			incomplete._showHideChildren(false);
+			Object.assign(incomplete, baseProps);
 
-			Polymer.dom(element).appendChild(instance.root);
-			instance._showHideChildren(false);
+			if (!instance) {
+				return;
+			}
+
+			Object.assign(instance, baseProps);
+			instance._showHideChildren(true);
 		},
 
 		_removeInstance(instance) {
@@ -549,6 +530,33 @@
 					parent = child.parentNode;
 				Polymer.dom(parent).removeChild(child);
 			}
+		},
+
+		/**
+		* Syncronizes the `items` data with the created template instances
+		* depending on the currently selected item.
+		* @return {type}  description
+		*/
+		_synchronize() {
+			if (this._elements == null || this.elementsBuffer == null) {
+				return;
+			}
+			const selected = this.selected,
+				buffer = this.elementsBuffer,
+				offset = buffer / 2 >> 0,
+				max = Math.max,
+				min = Math.min,
+				length = this.items.length;
+
+			const	start = min(max(selected - offset, 0), length ? length - buffer : 0),
+				end = max(min(selected + offset, length ? length - 1 : 0), buffer - 1),
+				indexes = Array(end + 1).fill().map((u, i) => i).slice(start);
+
+			// Reset items
+			indexes.forEach(i => this._resetElement(i));
+			this._indexRenderQueue = indexes;
+			_asyncPeriod(this._renderQueue.bind(this));
+
 		},
 
 		/**
@@ -717,31 +725,18 @@
 			}
 		},
 
-		/**
-		* Syncronizes the `items` data with the created template instances
-		* depending on the currently selected item.
-		*
-		* @return {type}  description
-		*/
-		_synchronize() {
-			if (this._elements == null || this.elementsBuffer == null) {
-				return;
-			}
-			const buffer = this.elementsBuffer,
-				offset = buffer / 2 >> 0,
-				max = Math.max,
-				min = Math.min,
-				length = this.items.length,
-				end = max(min(this.selected + offset, length ? length - 1 : 0), buffer - 1),
-				index = min(max(this.selected - offset, 0), length ? length - buffer : 0),
-				numSteps = end - index + 1;
+		_forwardItem(element, item, idx) {
+			this._removeInstance(element.__instance);
+			const instance = new this._elementCtor({});
+			Object.assign(instance, { [this.as]: item }, this._getBaseProps(idx));
 
-			this._indexRenderQueue = Array(numSteps).fill().map((u, idx) => index + idx);
-			this._renderQueue();
+			element.__instance = instance;
+			element.item = item;
+			element._reset = false;
+			Polymer.dom(element).appendChild(instance.root);
 		},
 
 		_renderQueue() {
-
 			const queue = this._indexRenderQueue;
 
 			if (!Array.isArray(queue) || queue.length < 1) {
@@ -760,56 +755,57 @@
 				return;
 			}
 
-			let renderRun = false,
-				reRun = true;
+			this._renderRan = this._renderAbort = false;
 
 			this._indexRenderQueue = queue
 				.sort((a, b) => a === this.selected ? -1 : b === this.selected ? 1 : 0)
-				.map(idx => {
-
-					const elementIndex = idx % this.elementsBuffer,
-						element = this._elements[elementIndex],
-						item = this.items[idx];
-
-					if (!element) {
-						// don't re-run _renderQueue()
-						// will be re-run when elements are created
-						reRun = false;
-						// maintain task in queue
-						return idx;
-					}
-
-					const incomplete = this.isIncompleteFn(item);
-					this._toggleInstance(element, idx, incomplete);
-
-					if (incomplete) {
-						// no data for item, instance has been toggled
-						// drop task from queue
-						return;
-					}
-
-					if (element.item === item) {
-						// already rendered
-						// drop task from queue
-						return;
-					}
-
-					if (renderRun) {
-						// one render per run
-						// maintain task in queue
-						return idx;
-					}
-
-					this._forwardItem(element, item);
-					renderRun = true;
-				})
+				.map(this._renderQueueProcess, this)
 				.filter(idx => idx != null);
 
-			if (!reRun) {
+			if (this._renderAbort || this._indexRenderQueue.length === 0) {
 				return;
 			}
 
 			_asyncPeriod(this._renderQueue.bind(this));
+		},
+
+		_renderQueueProcess(idx) {
+			const element = this._getElement(idx),
+				item = this.items[idx];
+
+			if (!element) {
+				this._renderAbort = true;
+				return;
+			}
+
+			if (this.isIncompleteFn(item)) {
+				element.item = false;
+				// no data for item drop task from queue
+				return;
+			}
+
+			if (this._renderRan) {
+				// one render per run
+				// maintain task in queue
+				return idx;
+			}
+
+			element.__incomplete._showHideChildren(true);
+
+			const isSelected = idx === this.selected,
+				needsRender  = element.item !== item;
+
+			this._renderRan = needsRender;
+
+			if (needsRender) {
+				this._forwardItem(element, item, idx);
+				if (isSelected) {
+					return idx;
+				}
+			} else if (isSelected) {
+				// resize is a expensive operation
+				this._renderRan = this._notifyElementResize();
+			}
 		}
 	});
 }());
