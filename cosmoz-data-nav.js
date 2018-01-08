@@ -6,26 +6,26 @@
 	const IS_V2 = Polymer.flush != null,
 		_async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
 		_hasDeadline = 'IdleDeadline' in window,
-		_asyncPeriod = (cb, minimum = 16) =>
+		_asyncPeriod = (cb, minimum = 16, timeout = 1500) =>
 			_async(deadline => {
 				if (_hasDeadline && deadline != null) {
 					const _isDeadline = deadline instanceof window.IdleDeadline;
-					if (_isDeadline && deadline.timeRemaining() < minimum) {
+					if (_isDeadline && !deadline.didTimeout && deadline.timeRemaining() < minimum) {
 						return _asyncPeriod(cb, minimum);
 					}
 				}
 				cb();
-			}),
-		_doAsyncSteps = (steps, minDeadline = 16) => {
+			}, timeout == null ? undefined : { timeout }),
+		_doAsyncSteps = (steps, minDeadline = 16, timeout) => {
 			const callStep = () => {
 				if (!Array.isArray(steps) || steps.length < 1) {
 					return;
 				}
 				const step = steps.shift();
 				step();
-				_asyncPeriod(callStep, minDeadline);
+				_asyncPeriod(callStep, minDeadline, timeout);
 			};
-			return _asyncPeriod(callStep, minDeadline);
+			return _asyncPeriod(callStep, minDeadline, timeout);
 		};
 
 	Polymer({
@@ -189,6 +189,7 @@
 				this._templatesObserver = null;
 			}
 			this._cache = {};
+			this._indexRenderQueue = [];
 		},
 
 		_onTemplatesChange(change) {
@@ -205,13 +206,13 @@
 			}
 			this._templatize(elementTemplate, incompleteTemplate);
 
-			const steps = Array(this.elementsBuffer).fill(this._createElement.bind(this));
+			const steps = Array(this.elementsBuffer).fill(this._createElement.bind(this)),
+				first = steps.shift();
 
-			if (this._isVisible) {
-				steps.shift().call();
-			}
-
-			_doAsyncSteps(steps);
+			_asyncPeriod(() => {
+				first.call();
+				_doAsyncSteps(steps);
+			}, 16, 200);
 		},
 
 		_templatize(elementTemplate, incompleteTemplate) {
