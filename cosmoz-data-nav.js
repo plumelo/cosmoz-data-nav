@@ -541,9 +541,9 @@
 				min = Math.min,
 				length = this.items.length;
 
-			const	start = min(max(selected - offset, 0), length ? length - buffer : 0),
+			const start = min(max(selected - offset, 0), length ? length - buffer : 0),
 				end = max(min(selected + offset, length ? length - 1 : 0), buffer - 1),
-				indexes = Array(end + 1).fill().map((u, i) => i).slice(start);
+				indexes = Array(end + 1).fill().map((u, i) => i).slice(start >= 0 ? start : 0);
 
 			// Reset items
 			indexes.forEach(i => this._resetElement(i));
