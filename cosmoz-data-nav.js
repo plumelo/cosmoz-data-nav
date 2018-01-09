@@ -6,26 +6,19 @@
 	const IS_V2 = Polymer.flush != null,
 		_async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
 		_hasDeadline = 'IdleDeadline' in window,
-		_asyncPeriod = (cb, minimum = 16, timeout = 1500) =>
-			_async(deadline => {
-				if (_hasDeadline && deadline != null) {
-					const _isDeadline = deadline instanceof window.IdleDeadline;
-					if (_isDeadline && !deadline.didTimeout && deadline.timeRemaining() < minimum) {
-						return _asyncPeriod(cb, minimum);
-					}
-				}
-				cb();
-			}, timeout == null ? undefined : { timeout }),
-		_doAsyncSteps = (steps, minDeadline = 16, timeout) => {
+		_asyncPeriod = (cb, timeout = 1500) => {
+			_async(() => cb(), _hasDeadline && { timeout });
+		},
+		_doAsyncSteps = (steps, timeout) => {
 			const callStep = () => {
 				if (!Array.isArray(steps) || steps.length < 1) {
 					return;
 				}
 				const step = steps.shift();
 				step();
-				_asyncPeriod(callStep, minDeadline, timeout);
+				_asyncPeriod(callStep, timeout);
 			};
-			return _asyncPeriod(callStep, minDeadline, timeout);
+			return _asyncPeriod(callStep, timeout);
 		};
 
 	Polymer({
@@ -212,7 +205,7 @@
 			_asyncPeriod(() => {
 				first.call();
 				_doAsyncSteps(steps);
-			}, 16, 200);
+			}, 200);
 		},
 
 		_templatize(elementTemplate, incompleteTemplate) {
@@ -674,8 +667,8 @@
 			Polymer.IronResizableBehavior.notifyResize.call(this);
 		},
 
-		resizerShouldNotify() {
-			return false; //handle resize manually
+		resizerShouldNotify(resizable) {
+			return this._isDescendantOfElementInstance(resizable, this._selectedElement);
 		},
 
 		/**
