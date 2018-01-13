@@ -467,6 +467,7 @@
 				return;
 			}
 
+			this._synchronize();
 			this._preloadIdx++;
 			this._preload();
 		},
