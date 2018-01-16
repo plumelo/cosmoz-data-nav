@@ -404,6 +404,10 @@
 			let classes = element.classList,
 				prev = this._selectedElement;
 
+			if (!this.animating) {
+				this._elements.forEach(el => el.classList.remove('selected'));
+			}
+
 			classes.toggle('in', this.animating);
 			classes.add('selected');
 
