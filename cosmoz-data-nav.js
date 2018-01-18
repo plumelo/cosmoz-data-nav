@@ -330,14 +330,10 @@
 			}
 
 			this.set(['items', index], this._cache[id] = item);
-			this._isPreloading = false;
 			this._preload();
 
 			if (this.animating || this.selected == null) {
 				return;
-			}
-			if (this.selected !== index) {
-				return this._synchronize();
 			}
 
 			this._updateSelected();
@@ -381,8 +377,11 @@
 				});
 			}
 
-			this.selected = this._preloadIdx = 0;
-			this._preload();
+			if (this.selected === 0) {
+				return this._updateSelected();
+			}
+			this.selected = 0;
+
 		},
 
 		/**
@@ -390,10 +389,12 @@
 		 * updates related properties and the `selected` page.
 		 *
 		 * @param  {Number} selected The selected property
+		 * @param  {Number} previous The previous value of selected property
 		 * @return {void}
 		 */
-		_updateSelected(selected = this.selected) {
+		_updateSelected(selected = this.selected, previous) {
 			this._setSelectedNext((selected || 0) + 1);
+			this._preload(selected);
 
 			const element = this._getElement(selected);
 
@@ -401,25 +402,23 @@
 				return;
 			}
 
-			let classes = element.classList,
-				prev = this._selectedElement;
+			const classes = element.classList,
+				animating = this.animating && previous != null && previous !== selected,
+				prev = animating && this._getElement(previous);
 
-			if (!this.animating) {
+			if (!animating) {
 				this._elements.forEach(el => el.classList.remove('selected'));
 			}
 
 			classes.toggle('in', this.animating);
 			classes.add('selected');
 
-			this._selectedElement = element;
-
-			if (!this.animating) {
-				this._synchronize();
-				return;
+			if (!animating) {
+				return this._synchronize();
 			}
 
 			requestAnimationFrame(() => {
-				if (prev && prev !== this._selectedElement && element.offsetWidth) {
+				if (prev && element.offsetWidth) {
 					prev.classList.add('out');
 					prev.classList.remove('selected');
 				}
@@ -443,7 +442,6 @@
 			this.animating = false;
 			this._elements.forEach(el => el.classList.remove('in', 'out'));
 			this._synchronize();
-			this._preload();
 		},
 
 		/**
@@ -451,28 +449,28 @@
 		 * selected item and the `preload` property.
 		 *
 		 * @fires need-data
+		 * @param  {Number} index The index to preload from
 		 * @return {void}
 		 */
-		_preload() {
-			if (!Array.isArray(this.items) || this.items.length === 0 || this._isPreloading) {
+		_preload(index = this._preloadIdx) {
+			const items = this.items;
+
+			if (!Array.isArray(items) || items.length === 0) {
 				return;
 			}
 
-			const index = this._preloadIdx,
-				item = this.items[index];
+			const item = items[index];
 
 			if (this.isIncompleteFn(item)) {
-				this._isPreloading = true;
 				this.fire('need-data', { id: item, render: true });
 				return;
 			}
 
-			if (index >= Math.min(this.selected + this.preload, this.items.length - 1)) {
+			if (index >= Math.min(this.selected + this.preload, items.length - 1)) {
 				return;
 			}
 
-			this._synchronize();
-			this._preloadIdx++;
+			this._preloadIdx = index + 1;
 			this._preload();
 		},
 
@@ -642,10 +640,9 @@
 		 * @param  {HTMLElement} resizable A descendant resizable element
 		 * @return {Boolean} True if the element should be notified
 		 */
-		resizerShouldBeNotified(resizable) {
-			return this._isDescendantOfElementInstance(resizable, this._selectedElement);
+		resizerShouldNotify(resizable) {
+			return this._isDescendantOfElementInstance(resizable, this._getElement(this.selected));
 		},
-
 
 		/**
 		 * Handles resize notifications from descendants.
@@ -654,7 +651,7 @@
 		 * @return {void}
 		 */
 		_onDescendantIronResize(event) {
-			if (this._notifyingDescendant || this.animating || !this._isVisible || !this.resizerShouldBeNotified(event.target)) {
+			if (this._notifyingDescendant || this.animating || !this._isVisible || !this.resizerShouldNotify(event.target)) {
 				event.stopPropagation();
 				return;
 			}
@@ -672,17 +669,13 @@
 			Polymer.IronResizableBehavior.notifyResize.call(this);
 		},
 
-		resizerShouldNotify(resizable) {
-			return this._isDescendantOfElementInstance(resizable, this._selectedElement);
-		},
-
 		/**
 		 * Notifies a descendant resizable of the element.
 		 *
 		 * @param  {HTMLElement} element The element to search within for a resizable
 		 * @return {Boolean} True if descendant has been notified.
 		 */
-		_notifyElementResize(element = this._selectedElement) {
+		_notifyElementResize(element = this._getElement(this.selected)) {
 			if (!this.isAttached || !element) {
 				return false;
 			}
