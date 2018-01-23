@@ -172,11 +172,31 @@
 				value() {
 					return item => item == null || typeof item !== 'object';
 				}
+			},
+
+			/**
+			 * The hash parameter to use for selecting an item.
+			 */
+			hashParam: {
+				type: String
+			},
+
+			/**
+			 * The route hash parameters extracted by the `cosmoz-page-location`
+			 * element.
+			 */
+			_routeHashParams: {
+				type: Object,
+				notify: true
 			}
 		},
 
 		behaviors: [
 			Polymer.IronResizableBehavior
+		],
+
+		observers: [
+			'_selectedChanged(selected, hashParam)'
 		],
 
 		listeners: {
@@ -191,6 +211,7 @@
 		 */
 		created() {
 			this._cache = {};
+			this._preloadIdx = 0;
 		},
 
 		/**
@@ -859,6 +880,19 @@
 				return this.clearCache();
 			}
 			ids.forEach(id => delete this._cache[id]);
+		},
+		_selectedChanged(selected, hashParam) {
+			if (!(hashParam && this._routeHashParams && this.items.length)) {
+				return;
+			}
+			const item = this.items[selected],
+				path = ['_routeHashParams', hashParam],
+				hashValue = this.get(path);
+
+			if (item.id === hashValue) {
+				return;
+			}
+			this.set(path, item.id);
 		}
 	});
 }());

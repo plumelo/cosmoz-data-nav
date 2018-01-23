@@ -4,6 +4,7 @@
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 
 <link rel="import" href="../cosmoz-bottom-bar/cosmoz-bottom-bar-view.html">
+<link rel="import" href="../cosmoz-page-router/cosmoz-page-location.html">
 <link rel="import" href="../cosmoz-templatize/cosmoz-templatize.html">
 
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
@@ -80,6 +81,7 @@ Example:
 				display: none;
 			}
 		</style>
+		<cosmoz-page-location id="location" route-hash="{{ _routeHashParams }}"></cosmoz-page-location>
 		<div id="items">
 			<slot name="items"></slot>
 		</div>
