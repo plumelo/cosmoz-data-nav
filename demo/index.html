@@ -73,7 +73,7 @@
 				};
 				basic.onNeedData = function (event, detail) {
 					const id = detail.id;
-					if(asyncs[id]){
+					if (asyncs[id]) {
 						Polymer.Base.cancelAsync(asyncs[id]);
 						asyncs[id] = null;
 					}

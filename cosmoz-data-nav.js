@@ -188,15 +188,19 @@
 			_routeHashParams: {
 				type: Object,
 				notify: true
+			},
+
+			/**
+			 *
+			 */
+			idPath: {
+				type: String,
+				value: 'id'
 			}
 		},
 
 		behaviors: [
 			Polymer.IronResizableBehavior
-		],
-
-		observers: [
-			'_selectedChanged(selected, hashParam)'
 		],
 
 		listeners: {
@@ -450,6 +454,7 @@
 		_updateSelected(selected = this.selected, previous) {
 			this._setSelectedNext((selected || 0) + 1);
 			this._preload(selected);
+			this._updateHashForSelected(selected);
 
 			const element = this._getElement(selected);
 
@@ -883,16 +888,29 @@
 		},
 		_selectedChanged(selected, hashParam) {
 			if (!(hashParam && this._routeHashParams && this.items.length)) {
+
+		_updateHashForSelected(selected) {
+			const hashParam = this.hashParam,
+				idPath = this.idPath;
+
+			if (!(hashParam && idPath && this._routeHashParams && this.items.length)) {
 				return;
 			}
-			const item = this.items[selected],
+
+			const item = this.items[selected];
+			if (item == null) {
+				return;
+			}
+			const	itemId = this.isIncompleteFn(item) ? item : this.get(idPath, item),
 				path = ['_routeHashParams', hashParam],
 				hashValue = this.get(path);
 
-			if (item.id === hashValue) {
+			if (itemId === hashValue) {
 				return;
 			}
-			this.set(path, item.id);
+
+			console.log('_updateHashForSelected', itemId, hashValue);
+			this.set(path, itemId);
 		}
 	});
 }());
