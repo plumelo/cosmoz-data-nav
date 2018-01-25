@@ -73,6 +73,12 @@
 				readOnly: true
 			},
 
+			_hasItems: {
+				type: Boolean,
+				readOnly: true,
+				reflectToAttribute: true
+			},
+
 			elementsBuffer: {
 				type: Number,
 				value: 3
@@ -258,13 +264,15 @@
 			}
 			this._templatize(elementTemplate, incompleteTemplate);
 
-			const steps = Array(this.elementsBuffer).fill(this._createElement.bind(this)),
-				first = steps.shift();
+			this._elements = Array(this.elementsBuffer).fill().map(() => {
+				const element = document.createElement('div');
+				element.setAttribute('slot', 'items');
+				element.classList.add('animatable');
+				Polymer.dom(this).appendChild(element);
+				return element;
+			});
 
-			_asyncPeriod(() => {
-				first.call();
-				_doAsyncSteps(steps);
-			}, 200);
+			_doAsyncSteps(this._elements.map(el => this._createIncomplete.bind(this, el)));
 		},
 
 		_templatize(elementTemplate, incompleteTemplate) {
@@ -332,30 +340,13 @@
 			this.set(['items', index], value);
 		},
 
-		_createElement() {
-			if (this._elements.length >= this.elementsBuffer) {
+		_createIncomplete(element) {
+			if (element.__incomplete) {
 				return;
 			}
-
-			const elements = this._elements,
-				index = elements.length,
-				element = document.createElement('div'),
-				incomplete = new this._incompleteCtor({});
-
-			element.setAttribute('slot', 'items');
-			element.classList.add('animatable', 'incomplete');
+			const incomplete = new this._incompleteCtor({});
 			element.__incomplete = incomplete;
-			elements.push(element);
-
 			Polymer.dom(element).appendChild(incomplete.root);
-			Polymer.dom(this).appendChild(element);
-
-			if (this.selected == null || this.selected !== index) {
-				return;
-			}
-			this.animating = false;
-			this._updateSelected();
-
 		},
 
 		/**
@@ -423,10 +414,9 @@
 		_itemsChanged(items) {
 			const length = items && items.length;
 
-			this._isPreloading = false;
-
 			//Update readOnly queueLength
 			this._setQueueLength(length >> 0);
+			this._set_hasItems(!!length);
 
 			if (length) {
 				items.forEach((item, index) => {
@@ -434,15 +424,16 @@
 						this.set(['items', index], this._cache[item]);
 					}
 				});
+			}
 
-				if (this.hashParam !== null && this._updateSelectedFromHash()) {
-					return;
-				}
+			if (this._updateSelectedFromHash()) {
+				return;
 			}
 
 			if (this.selected === 0) {
 				return this._updateSelected();
 			}
+
 			this.selected = 0;
 
 		},
@@ -929,11 +920,11 @@
 					return (this.isIncompleteFn(i) ? i : this.get(idPath, i)) === hashValue;
 				});
 
-			if (selection === this.selected) {
+			if (selection < 0 || selection === this.selected) {
 				return;
 			}
 			this.selected = selection;
-			console.log('selecting', 3);
+			console.log('selecting', selection);
 			return true;
 		}
 

@@ -77,9 +77,7 @@
 						Polymer.Base.cancelAsync(asyncs[id]);
 						asyncs[id] = null;
 					}
-
 					console.log('on need data');
-
 					asyncs[id] = Polymer.Base.async(() => {
 						event.target.setItemById(detail.id, { id: detail.id });
 					}, 5000);
