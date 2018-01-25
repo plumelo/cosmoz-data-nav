@@ -890,8 +890,6 @@
 			}
 			ids.forEach(id => delete this._cache[id]);
 		},
-		_selectedChanged(selected, hashParam) {
-			if (!(hashParam && this._routeHashParams && this.items.length)) {
 
 		_updateHashForSelected(selected) {
 			const hashParam = this.hashParam,
