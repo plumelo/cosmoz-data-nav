@@ -434,6 +434,10 @@
 						this.set(['items', index], this._cache[item]);
 					}
 				});
+
+				if (this.hashParam !== null && this._updateSelectedFromHash()) {
+					return;
+				}
 			}
 
 			if (this.selected === 0) {
@@ -911,6 +915,29 @@
 
 			console.log('_updateHashForSelected', itemId, hashValue);
 			this.set(path, itemId);
+		},
+
+		_updateSelectedFromHash() {
+			const hashParam = this.hashParam,
+				idPath = this.idPath;
+
+			if (!(hashParam && idPath && this._routeHashParams)) {
+				return;
+			}
+
+			const path = ['_routeHashParams', hashParam],
+				hashValue = this.get(path),
+				selection = this.items.findIndex(i => {
+					return (this.isIncompleteFn(i) ? i : this.get(idPath, i)) === hashValue;
+				});
+
+			if (selection === this.selected) {
+				return;
+			}
+			this.selected = selection;
+			console.log('selecting', 3);
+			return true;
 		}
+
 	});
 }());
