@@ -160,6 +160,7 @@
 		created() {
 			this._cache = {};
 			this._elements = [];
+			this.listen(window, 'cosmoz-cache-purge', '_onCachePurge');
 		},
 
 		/**
@@ -183,6 +184,7 @@
 			}
 			this._cache = {};
 			this._indexRenderQueue = [];
+			this.unlisten(window, 'cosmoz-cache-purge', '_onCachePurge');
 		},
 
 		_onTemplatesChange(change) {
@@ -797,6 +799,14 @@
 				// resize is a expensive operation
 				this._renderRan = this._notifyElementResize();
 			}
+		},
+
+		_onCachePurge(e, detail) {
+			const ids = detail.ids;
+			if (!Array.isArray(ids) || ids.length === 0) {
+				return this.clearCache();
+			}
+			ids.forEach(id => delete this._cache[id]);
 		}
 	});
 }());
