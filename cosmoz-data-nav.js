@@ -30,7 +30,7 @@
 			_elements: {
 				type: Array,
 				value() {
-					return [];
+					return [this._createElement()];
 				}
 			},
 
@@ -222,6 +222,7 @@
 		created() {
 			this._cache = {};
 			this._preloadIdx = 0;
+			this._updateHash = false;
 		},
 
 		/**
@@ -264,15 +265,16 @@
 			}
 			this._templatize(elementTemplate, incompleteTemplate);
 
-			this._elements = Array(this.elementsBuffer).fill().map(() => {
-				const element = document.createElement('div');
-				element.setAttribute('slot', 'items');
-				element.classList.add('animatable');
-				Polymer.dom(this).appendChild(element);
-				return element;
-			});
+			const elements = this._elements,
+				length = elements.length;
 
-			_doAsyncSteps(this._elements.map(el => this._createIncomplete.bind(this, el)));
+			elements.splice(-1, 0, ...Array(this.elementsBuffer - length)
+				.fill().map(this._createElement, this));
+
+			_doAsyncSteps(elements.map(el => {
+				Polymer.dom(this).appendChild(el);
+				return this._createIncomplete.bind(this, el);
+			}));
 		},
 
 		_templatize(elementTemplate, incompleteTemplate) {
@@ -338,6 +340,13 @@
 			}
 			this.removeFromCache(item);
 			this.set(['items', index], value);
+		},
+
+		_createElement() {
+			const element = document.createElement('div');
+			element.setAttribute('slot', 'items');
+			element.classList.add('animatable');
+			return element;
 		},
 
 		_createIncomplete(element) {
@@ -426,8 +435,11 @@
 				});
 			}
 
-			if (this._updateSelectedFromHash()) {
-				return;
+			if (!this._updateHash) {
+				if (this._updateSelectedFromHash()) {
+					return;
+				}
+				this._updateHash = true;
 			}
 
 			if (this.selected === 0) {
@@ -449,13 +461,10 @@
 		_updateSelected(selected = this.selected, previous) {
 			this._setSelectedNext((selected || 0) + 1);
 			this._preload(selected);
-			this._updateHashForSelected(selected);
 
 			const element = this._getElement(selected);
 
-			if (!element) {
-				return;
-			}
+			this._updateHashForSelected(selected);
 
 			const classes = element.classList,
 				animating = this.animating && previous != null && previous !== selected,
@@ -465,11 +474,14 @@
 				this._elements.forEach(el => el.classList.remove('selected'));
 			}
 
-			classes.toggle('in', this.animating);
+			classes.toggle('in', !!this.animating);
 			classes.add('selected');
 
 			if (!animating) {
-				return this._synchronize();
+				if (this.isAttached) {
+					this._synchronize();
+				}
+				return;
 			}
 
 			requestAnimationFrame(() => {
@@ -490,12 +502,12 @@
 		_onTransitionEnd(e) {
 			const elements = this._elements;
 
-			if (!this.animating || !elements.length || elements.indexOf(e.target) < 0) {
+			if (!this.animating || elements.indexOf(e.target) < 0) {
 				return;
 			}
 
 			this.animating = false;
-			this._elements.forEach(el => el.classList.remove('in', 'out'));
+			elements.forEach(el => el.classList.remove('in', 'out'));
 			this._synchronize();
 		},
 
@@ -537,8 +549,8 @@
 			};
 		},
 
-		_getElement(index, elements = this._elements) {
-			return elements[index % this.elementsBuffer];
+		_getElement(index) {
+			return this._elements[index % (this.elementsBuffer || this._elements.length) ];
 		},
 
 		_getInstance(selectedElement) {
@@ -606,9 +618,6 @@
 		* @return {type}  description
 		*/
 		_synchronize() {
-			if (this._elements == null || this.elementsBuffer == null) {
-				return;
-			}
 			const selected = this.selected,
 				buffer = this.elementsBuffer,
 				offset = buffer / 2 >> 0,
@@ -810,12 +819,6 @@
 				return;
 			}
 
-			if (!Array.isArray(this._elements) || this._elements.length < 1) {
-				// no elements to render to
-				// will be re-run when elements are created
-				return;
-			}
-
 			if (this.animating) {
 				// will be re-run on transition end
 				return;
@@ -838,11 +841,6 @@
 		_renderQueueProcess(idx) {
 			const element = this._getElement(idx),
 				item = this.items[idx];
-
-			if (!element) {
-				this._renderAbort = true;
-				return;
-			}
 
 			if (this.isIncompleteFn(item)) {
 				element.item = false;
@@ -883,6 +881,9 @@
 		},
 
 		_updateHashForSelected(selected) {
+			if (!this._updateHash) {
+				return;
+			}
 			const hashParam = this.hashParam,
 				idPath = this.idPath;
 
