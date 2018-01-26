@@ -222,7 +222,6 @@
 		created() {
 			this._cache = {};
 			this._preloadIdx = 0;
-			this._updateHash = false;
 		},
 
 		/**
@@ -435,11 +434,8 @@
 				});
 			}
 
-			if (!this._updateHash) {
-				if (this._updateSelectedFromHash()) {
-					return;
-				}
-				this._updateHash = true;
+			if (this._updateSelectedFromHash()) {
+				return;
 			}
 
 			if (this.selected === 0) {
@@ -881,9 +877,6 @@
 		},
 
 		_updateHashForSelected(selected) {
-			if (!this._updateHash) {
-				return;
-			}
 			const hashParam = this.hashParam,
 				idPath = this.idPath;
 
@@ -903,7 +896,6 @@
 				return;
 			}
 
-			console.log('_updateHashForSelected', itemId, hashValue);
 			this.set(path, itemId);
 		},
 
@@ -925,7 +917,6 @@
 				return;
 			}
 			this.selected = selection;
-			console.log('selecting', selection);
 			return true;
 		}
 
