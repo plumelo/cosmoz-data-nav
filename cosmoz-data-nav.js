@@ -490,24 +490,26 @@
 
 		_resetElement(index) {
 			const element = this._getElement(index);
-
-			if (!element || element._reset) {
+			if (!element) {
 				return;
 			}
 
 			const item = this.items[index];
-
 			if (!this.isIncompleteFn(item) && element.item === item) {
 				return;
 			}
-			element._reset = true;
 
 			const baseProps = this._getBaseProps(index),
 				incomplete = element.__incomplete,
 				instance = element.__instance;
 
-			incomplete._showHideChildren(false);
 			Object.assign(incomplete, baseProps);
+
+			if (element._reset) {
+				return;
+			}
+			element._reset = true;
+			incomplete._showHideChildren(false);
 
 			if (!instance) {
 				return;
