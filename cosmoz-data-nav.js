@@ -563,7 +563,7 @@
 
 		_resetElement(index) {
 			const element = this._getElement(index);
-			if (!element) {
+			if (!element || !element.__incomplete) {
 				return;
 			}
 
