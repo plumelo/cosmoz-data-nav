@@ -214,7 +214,7 @@
 			this._elementTemplate = elementTemplate;
 			this._incompleteTemplate = incompleteTemplate;
 
-			let baseProps = {
+			const baseProps = {
 				prevDisabled: true,
 				nextDisabled: true,
 				[this.indexAs]: true
@@ -494,14 +494,18 @@
 				return;
 			}
 
-			const item = this.items[index];
+			const item = this.items[index],
+				baseProps = this._getBaseProps(index),
+				incomplete = element.__incomplete,
+				instance = element.__instance;
+
+			if (instance) {
+				Object.assign(instance, baseProps);
+			}
+
 			if (!this.isIncompleteFn(item) && element.item === item) {
 				return;
 			}
-
-			const baseProps = this._getBaseProps(index),
-				incomplete = element.__incomplete,
-				instance = element.__instance;
 
 			Object.assign(incomplete, baseProps);
 
@@ -515,7 +519,6 @@
 				return;
 			}
 
-			Object.assign(instance, baseProps);
 			instance._showHideChildren(true);
 		},
 
