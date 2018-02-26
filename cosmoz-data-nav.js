@@ -143,6 +143,15 @@
 			},
 
 			/**
+			 * True if cosmoz-data-nav should try to maintain selection when
+			 * `items` change.
+			 */
+			maintainSelection: {
+				type: Boolean,
+				value: false
+			},
+
+			/**
 			 * The attribute that elements which control the `selected` of this element
 			 * should have. The value of the attribute can be `-1` or `+1`.
 			 */
@@ -438,11 +447,15 @@
 				return;
 			}
 
-			if (this.selected === 0) {
+			const index = this.maintainSelection && this.selected > 0 ? Math.max(0, items
+				.findIndex(i => this._getItemId(i) === this._getItemId(this.selectedItem))
+			) : 0;
+
+			if (this.selected === index) {
 				return this._updateSelected();
 			}
 
-			this.selected = 0;
+			this.selected = index;
 
 		},
 
