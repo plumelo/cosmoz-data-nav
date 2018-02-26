@@ -877,6 +877,10 @@
 			ids.forEach(id => delete this._cache[id]);
 		},
 
+		_getItemId(item) {
+			return this.isIncomplete(item) ? item  : this.get(this.idPath, item);
+		},
+
 		_updateHashForSelected(selected) {
 			const hashParam = this.hashParam,
 				idPath = this.idPath;
@@ -889,7 +893,7 @@
 			if (item == null) {
 				return;
 			}
-			const	itemId = this.isIncompleteFn(item) ? item : this.get(idPath, item),
+			const	itemId = this._getItemId(item),
 				path = ['_routeHashParams', hashParam],
 				hashValue = this.get(path);
 
@@ -910,13 +914,12 @@
 
 			const path = ['_routeHashParams', hashParam],
 				hashValue = this.get(path),
-				selection = this.items.findIndex(i => {
-					return (this.isIncompleteFn(i) ? i : this.get(idPath, i)) === hashValue;
-				});
+				selection = this.items.findIndex(i => this._getItemId(i) === hashValue);
 
 			if (selection < 0 || selection === this.selected) {
 				return;
 			}
+
 			this.selected = selection;
 			return true;
 		}
