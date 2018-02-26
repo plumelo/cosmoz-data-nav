@@ -878,7 +878,7 @@
 		},
 
 		_getItemId(item) {
-			return this.isIncomplete(item) ? item  : this.get(this.idPath, item);
+			return this.isIncompleteFn(item) ? item  : this.get(this.idPath, item);
 		},
 
 		_updateHashForSelected(selected) {
