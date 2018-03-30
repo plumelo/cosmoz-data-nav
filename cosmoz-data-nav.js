@@ -81,6 +81,7 @@
 			 */
 			selected: {
 				type: Number,
+				value: 0,
 				notify: true,
 				observer: '_updateSelected'
 			},
@@ -96,12 +97,33 @@
 			},
 
 			/**
+			 * The currently selected element (holder)
+			 */
+			selectedElement: {
+				type: Object,
+				notify: true,
+				readOnly: true,
+				computed: '_getElement(selected, _elements)'
+			},
+
+			/**
+			 * The currently selected element (instance)
+			 */
+			selectedInstance: {
+				type: Object,
+				notify: true,
+				readOnly: true,
+				computed: '_getInstance(selectedElement)'
+			},
+
+			/**
 			 * The currently selected item, or `null` if no item is selected.
 			 */
 			selectedItem: {
 				type: Object,
 				notify: true,
-				readOnly: true
+				readOnly: true,
+				computed: '_getItem(selected, items)'
 			},
 
 			/**
@@ -266,12 +288,12 @@
 		},
 
 		_notifyInstanceProp(inst, prop, value) {
-			const items = this.items,
-				index = inst.index;
-			if (prop !== this.as || value === items[index] || this._allElementInstances.indexOf(inst) < 0) {
+			const index = inst.index,
+				item = this.items[index];
+			if (prop !== this.as || value === item || this._allElementInstances.indexOf(inst) < 0) {
 				return;
 			}
-			this.removeFromCache(items[index]);
+			this.removeFromCache(item);
 			this.set(['items', index], value);
 		},
 
@@ -484,8 +506,20 @@
 			};
 		},
 
-		_getElement(index) {
-			return this._elements[index % this.elementsBuffer];
+		_getElement(index, elements = this._elements) {
+			return elements[index % this.elementsBuffer];
+		},
+
+		_getInstance(selectedElement) {
+			if (selectedElement == null || selectedElement.children.length < 2) {
+				return;
+			}
+			// index 0 is incomplete element
+			return selectedElement.children[1];
+		},
+
+		_getItem(index, items = this.items) {
+			return items[index];
 		},
 
 		_resetElement(index) {
@@ -648,7 +682,7 @@
 		 * @return {Boolean} True if the element should be notified
 		 */
 		resizerShouldNotify(resizable) {
-			return this._isDescendantOfElementInstance(resizable, this._getElement(this.selected));
+			return this._isDescendantOfElementInstance(resizable, this.selectedElement);
 		},
 
 		/**
@@ -682,7 +716,7 @@
 		 * @param  {HTMLElement} element The element to search within for a resizable
 		 * @return {Boolean} True if descendant has been notified.
 		 */
-		_notifyElementResize(element = this._getElement(this.selected)) {
+		_notifyElementResize(element = this.selectedElement) {
 			if (!this.isAttached || !element) {
 				return false;
 			}
