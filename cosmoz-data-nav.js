@@ -25,6 +25,16 @@
 		is: 'cosmoz-data-nav',
 		properties: {
 			/**
+			 * The array of buffer elements.
+			 */
+			_elements: {
+				type: Array,
+				value() {
+					return [];
+				}
+			},
+
+			/**
 			 * The name of the variable to add to the binding scope for the array
 			 * element associated with a template instance.
 			 */
@@ -181,8 +191,6 @@
 		 */
 		created() {
 			this._cache = {};
-			this._elements = [];
-			this.listen(window, 'cosmoz-cache-purge', '_onCachePurge');
 		},
 
 		/**
@@ -191,7 +199,9 @@
 		 * @return {void}
 		 */
 		attached() {
-			this._templatesObserver = Polymer.dom(this.$.templatesSlot).observeNodes(this._onTemplatesChange.bind(this));
+			this._templatesObserver = Polymer.dom(this.$.templatesSlot)
+				.observeNodes(this._onTemplatesChange.bind(this));
+			this.listen(window, 'cosmoz-cache-purge', '_onCachePurge');
 		},
 
 		/**
