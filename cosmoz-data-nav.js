@@ -656,10 +656,13 @@
 				if (parent === ancestor) {
 					return true;
 				}
-				parent = parent.parentNode;
-				if (parent == null) {
-					parent = parent instanceof ShadowRoot && parent.host;
+				const nextParent = parent.parentNode;
+				if (nextParent == null && parent instanceof ShadowRoot) {
+					parent = parent.host;
+					continue;
 				}
+				parent = nextParent;
+
 			}
 			return false;
 		},
