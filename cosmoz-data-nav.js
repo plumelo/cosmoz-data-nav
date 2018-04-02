@@ -469,7 +469,6 @@
 		 */
 		_updateSelected(selected = this.selected, previous) {
 			this._setSelectedNext((selected || 0) + 1);
-			this._setSelectedItem(this.items[selected]);
 			this._preload(selected);
 
 			const element = this._getElement(selected);
