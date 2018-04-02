@@ -119,7 +119,7 @@
 				type: Object,
 				notify: true,
 				readOnly: true,
-				computed: '_getElement(selected, _elements)'
+				computed: '_getElement(selected, _elements.*)'
 			},
 
 			/**
@@ -276,7 +276,7 @@
 			const elements = this._elements,
 				length = elements.length;
 
-			elements.splice(-1, 0, ...Array(this.elementsBuffer - length)
+			this.splice('_elements', -1, 0, ...Array(this.elementsBuffer - length)
 				.fill().map(this._createElement, this));
 
 			_doAsyncSteps(elements.map(el => {
