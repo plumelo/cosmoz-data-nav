@@ -73,7 +73,7 @@
 				readOnly: true
 			},
 
-			_hasItems: {
+			hasItems: {
 				type: Boolean,
 				readOnly: true,
 				reflectToAttribute: true
@@ -433,7 +433,7 @@
 
 			//Update readOnly queueLength
 			this._setQueueLength(length >> 0);
-			this._set_hasItems(!!length);
+			this._setHasItems(!!length);
 
 			if (length) {
 				items.forEach((item, index) => {

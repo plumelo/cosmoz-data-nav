@@ -76,9 +76,9 @@ Example:
 				transform: translateX(100%);
 			}
 
-			:host([_has-items][animating]) #items > ::slotted(:not(.selected):not(.out)),
-			:host([_has-items]:not([animating])) #items > ::slotted(:not(.selected)),
-			:host(:not([_has-items])) #items > ::slotted(:not(:first-of-type)){
+			:host([has-items][animating]) #items > ::slotted(:not(.selected):not(.out)),
+			:host([has-items]:not([animating])) #items > ::slotted(:not(.selected)),
+			:host(:not([has-items])) #items > ::slotted(:not(:first-of-type)){
 				display: none;
 			}
 		</style>
