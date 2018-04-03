@@ -201,8 +201,7 @@
 			 * element.
 			 */
 			_routeHashParams: {
-				type: Object,
-				notify: true
+				type: Object
 			},
 
 			/**
