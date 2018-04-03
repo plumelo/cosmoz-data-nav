@@ -559,8 +559,9 @@
 			};
 		},
 
-		_getElement(index) {
-			return this._elements[index % (this.elementsBuffer || this._elements.length) ];
+		_getElement(index, _elements = this._elements) {
+			const elements = _elements && _elements.base || _elements;
+			return elements[index % (this.elementsBuffer || elements.length) ];
 		},
 
 		_getInstance(selectedElement) {
