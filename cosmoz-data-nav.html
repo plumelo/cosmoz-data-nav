@@ -4,6 +4,7 @@
 <link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 
 <link rel="import" href="../cosmoz-bottom-bar/cosmoz-bottom-bar-view.html">
+<link rel="import" href="../cosmoz-page-router/cosmoz-page-location.html">
 <link rel="import" href="../cosmoz-templatize/cosmoz-templatize.html">
 
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
@@ -75,11 +76,13 @@ Example:
 				transform: translateX(100%);
 			}
 
-			:host([animating]) #items > ::slotted(:not(.selected):not(.out)),
-			:host(:not([animating])) #items > ::slotted(:not(.selected)) {
+			:host([has-items][animating]) #items > ::slotted(:not(.selected):not(.out)),
+			:host([has-items]:not([animating])) #items > ::slotted(:not(.selected)),
+			:host(:not([has-items])) #items > ::slotted(:not(:first-of-type)){
 				display: none;
 			}
 		</style>
+		<cosmoz-page-location id="location" route-hash="{{ _routeHashParams }}"></cosmoz-page-location>
 		<div id="items">
 			<slot name="items"></slot>
 		</div>
@@ -87,18 +90,16 @@ Example:
 			<slot id="templatesSlot"></slot>
 		</div>
 		<template id="incompleteTemplate">
-			<div incomplete class="layout vertical fit">
-				<cosmoz-bottom-bar-view active>
-					<div slot="scroller-content" class="layout horizontal center-justified center">
-						<paper-spinner-lite active></paper-spinner-lite>
-						<div style="margin-left: 10px">
-							<h3><span>[[ _('Data is updating', t) ]]</span><span hidden$="[[ t ]]">Data is updating</span></h3>
-						</div>
+			<cosmoz-bottom-bar-view active incomplete class="fit">
+				<div slot="scroller-content" class="flex layout horizontal center-justified center">
+					<paper-spinner-lite active></paper-spinner-lite>
+					<div style="margin-left: 10px">
+						<h3><span>[[ _('Data is updating', t) ]]</span><span hidden$="[[ t ]]">Data is updating</span></h3>
 					</div>
-					<paper-icon-button disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
-					<paper-icon-button disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1">></paper-icon-button>
-				</cosmoz-bottom-bar-view>
-			</div>
+				</div>
+				<paper-icon-button disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
+				<paper-icon-button disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
+			</cosmoz-bottom-bar-view>
 		</template>
 
 	</template>

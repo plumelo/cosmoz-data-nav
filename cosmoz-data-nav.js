@@ -30,7 +30,7 @@
 			_elements: {
 				type: Array,
 				value() {
-					return [];
+					return [this._createElement()];
 				}
 			},
 
@@ -73,6 +73,12 @@
 				readOnly: true
 			},
 
+			hasItems: {
+				type: Boolean,
+				readOnly: true,
+				reflectToAttribute: true
+			},
+
 			elementsBuffer: {
 				type: Number,
 				value: 3
@@ -113,7 +119,7 @@
 				type: Object,
 				notify: true,
 				readOnly: true,
-				computed: '_getElement(selected, _elements)'
+				computed: '_getElement(selected, _elements.*)'
 			},
 
 			/**
@@ -134,6 +140,15 @@
 				notify: true,
 				readOnly: true,
 				computed: '_getItem(selected, items)'
+			},
+
+			/**
+			 * True if cosmoz-data-nav should try to maintain selection when
+			 * `items` change.
+			 */
+			maintainSelection: {
+				type: Boolean,
+				value: false
 			},
 
 			/**
@@ -172,6 +187,29 @@
 				value() {
 					return item => item == null || typeof item !== 'object';
 				}
+			},
+
+			/**
+			 * The hash parameter to use for selecting an item.
+			 */
+			hashParam: {
+				type: String
+			},
+
+			/**
+			 * The route hash parameters extracted by the `cosmoz-page-location`
+			 * element.
+			 */
+			_routeHashParams: {
+				type: Object
+			},
+
+			/**
+			 *
+			 */
+			idPath: {
+				type: String,
+				value: 'id'
 			}
 		},
 
@@ -191,6 +229,7 @@
 		 */
 		created() {
 			this._cache = {};
+			this._preloadIdx = 0;
 		},
 
 		/**
@@ -233,13 +272,16 @@
 			}
 			this._templatize(elementTemplate, incompleteTemplate);
 
-			const steps = Array(this.elementsBuffer).fill(this._createElement.bind(this)),
-				first = steps.shift();
+			const elements = this._elements,
+				length = elements.length;
 
-			_asyncPeriod(() => {
-				first.call();
-				_doAsyncSteps(steps);
-			}, 200);
+			this.splice('_elements', -1, 0, ...Array(this.elementsBuffer - length)
+				.fill().map(this._createElement, this));
+
+			_doAsyncSteps(elements.map(el => {
+				Polymer.dom(this).appendChild(el);
+				return this._createIncomplete.bind(this, el);
+			}));
 		},
 
 		_templatize(elementTemplate, incompleteTemplate) {
@@ -308,29 +350,19 @@
 		},
 
 		_createElement() {
-			if (this._elements.length >= this.elementsBuffer) {
-				return;
-			}
-
-			const elements = this._elements,
-				index = elements.length,
-				element = document.createElement('div'),
-				incomplete = new this._incompleteCtor({});
-
+			const element = document.createElement('div');
 			element.setAttribute('slot', 'items');
-			element.classList.add('animatable', 'incomplete');
-			element.__incomplete = incomplete;
-			elements.push(element);
+			element.classList.add('animatable');
+			return element;
+		},
 
-			Polymer.dom(element).appendChild(incomplete.root);
-			Polymer.dom(this).appendChild(element);
-
-			if (this.selected == null || this.selected !== index) {
+		_createIncomplete(element) {
+			if (element.__incomplete) {
 				return;
 			}
-			this.animating = false;
-			this._updateSelected();
-
+			const incomplete = new this._incompleteCtor({});
+			element.__incomplete = incomplete;
+			Polymer.dom(element).appendChild(incomplete.root);
 		},
 
 		/**
@@ -398,10 +430,9 @@
 		_itemsChanged(items) {
 			const length = items && items.length;
 
-			this._isPreloading = false;
-
 			//Update readOnly queueLength
 			this._setQueueLength(length >> 0);
+			this._setHasItems(!!length);
 
 			if (length) {
 				items.forEach((item, index) => {
@@ -411,10 +442,21 @@
 				});
 			}
 
-			if (this.selected === 0) {
+			if (this._updateSelectedFromHash()) {
+				return;
+			}
+
+			let index = 0;
+			if (this.maintainSelection && this.selected > 0) {
+				const selectedId = this._getItemId(this.selectedItem);
+				index = Math.max(0, items.findIndex(item => this._getItemId(item) === selectedId));
+			}
+
+			if (this.selected === index) {
 				return this._updateSelected();
 			}
-			this.selected = 0;
+
+			this.selected = index;
 
 		},
 
@@ -432,9 +474,7 @@
 
 			const element = this._getElement(selected);
 
-			if (!element) {
-				return;
-			}
+			this._updateHashForSelected(selected);
 
 			const classes = element.classList,
 				animating = this.animating && previous != null && previous !== selected,
@@ -444,11 +484,14 @@
 				this._elements.forEach(el => el.classList.remove('selected'));
 			}
 
-			classes.toggle('in', this.animating);
+			classes.toggle('in', !!this.animating);
 			classes.add('selected');
 
 			if (!animating) {
-				return this._synchronize();
+				if (this.isAttached) {
+					this._synchronize();
+				}
+				return;
 			}
 
 			requestAnimationFrame(() => {
@@ -469,12 +512,12 @@
 		_onTransitionEnd(e) {
 			const elements = this._elements;
 
-			if (!this.animating || !elements.length || elements.indexOf(e.target) < 0) {
+			if (!this.animating || elements.indexOf(e.target) < 0) {
 				return;
 			}
 
 			this.animating = false;
-			this._elements.forEach(el => el.classList.remove('in', 'out'));
+			elements.forEach(el => el.classList.remove('in', 'out'));
 			this._synchronize();
 		},
 
@@ -516,8 +559,9 @@
 			};
 		},
 
-		_getElement(index, elements = this._elements) {
-			return elements[index % this.elementsBuffer];
+		_getElement(index, _elements = this._elements) {
+			const elements = _elements && _elements.base || _elements;
+			return elements[index % (this.elementsBuffer || elements.length) ];
 		},
 
 		_getInstance(selectedElement) {
@@ -534,7 +578,7 @@
 
 		_resetElement(index) {
 			const element = this._getElement(index);
-			if (!element) {
+			if (!element || !element.__incomplete) {
 				return;
 			}
 
@@ -585,9 +629,6 @@
 		* @return {type}  description
 		*/
 		_synchronize() {
-			if (this._elements == null || this.elementsBuffer == null) {
-				return;
-			}
 			const selected = this.selected,
 				buffer = this.elementsBuffer,
 				offset = buffer / 2 >> 0,
@@ -789,12 +830,6 @@
 				return;
 			}
 
-			if (!Array.isArray(this._elements) || this._elements.length < 1) {
-				// no elements to render to
-				// will be re-run when elements are created
-				return;
-			}
-
 			if (this.animating) {
 				// will be re-run on transition end
 				return;
@@ -817,11 +852,6 @@
 		_renderQueueProcess(idx) {
 			const element = this._getElement(idx),
 				item = this.items[idx];
-
-			if (!element) {
-				this._renderAbort = true;
-				return;
-			}
 
 			if (this.isIncompleteFn(item)) {
 				element.item = false;
@@ -859,6 +889,54 @@
 				return this.clearCache();
 			}
 			ids.forEach(id => delete this._cache[id]);
+		},
+
+		_getItemId(item) {
+			return this.isIncompleteFn(item) ? item  : this.get(this.idPath, item);
+		},
+
+		_updateHashForSelected(selected) {
+			const hashParam = this.hashParam,
+				idPath = this.idPath;
+
+			if (!hashParam || !idPath || !this._routeHashParams || !this.items.length) {
+				return;
+			}
+
+			const item = this.items[selected];
+			if (item == null) {
+				return;
+			}
+			const	itemId = this._getItemId(item),
+				path = ['_routeHashParams', hashParam],
+				hashValue = this.get(path);
+
+			if (itemId === hashValue) {
+				return;
+			}
+
+			this.set(path, itemId);
+		},
+
+		_updateSelectedFromHash() {
+			const hashParam = this.hashParam,
+				idPath = this.idPath;
+
+			if (!(hashParam && idPath && this._routeHashParams)) {
+				return;
+			}
+
+			const path = ['_routeHashParams', hashParam],
+				hashValue = this.get(path),
+				selection = this.items.findIndex(i => this._getItemId(i) === hashValue);
+
+			if (selection < 0 || selection === this.selected) {
+				return;
+			}
+
+			this.selected = selection;
+			return true;
 		}
+
 	});
 }());

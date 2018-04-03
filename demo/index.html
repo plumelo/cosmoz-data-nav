@@ -47,7 +47,7 @@
 				<template>
 					<dom-bind id="basic">
 						<template is="dom-bind">
-							<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}">
+							<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}" hash-param="tt">
 								<template>
 									<cosmoz-demo-view class="fit layout vertical" item="{{ item }}" index="[[index]]" data-idx$="{{ computeColorIndex(index) }}"
 									prev-disabled="[[ prevDisabled ]]" next-disabled="[[ nextDisabled ]]"></cosmoz-demo-view>
@@ -63,15 +63,22 @@
 		(function () {
 			window.addEventListener('WebComponentsReady', function () {
 				let basic = document.getElementById('basic'),
-					items =  Array(20).fill('').map((e, i) => i.toString());
+					items =  Array(20).fill('').map((e, i) => i.toString()),
+					asyncs = {};
+
 				basic = !basic.set ? basic.firstElementChild : basic;
 
 				basic.computeColorIndex = function (index) {
 					return index % 3;
 				};
 				basic.onNeedData = function (event, detail) {
+					const id = detail.id;
+					if (asyncs[id]) {
+						Polymer.Base.cancelAsync(asyncs[id]);
+						asyncs[id] = null;
+					}
 					console.log('on need data');
-					Polymer.Base.async(() => {
+					asyncs[id] = Polymer.Base.async(() => {
 						event.target.setItemById(detail.id, { id: detail.id });
 					}, 5000);
 					return { id: detail.id };
