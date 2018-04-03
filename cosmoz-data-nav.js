@@ -864,8 +864,9 @@
 				// maintain task in queue
 				return idx;
 			}
-
-			element.__incomplete._showHideChildren(true);
+			if (element.__incomplete) {
+				element.__incomplete._showHideChildren(true);
+			}
 
 			const isSelected = idx === this.selected,
 				needsRender  = element.item !== item;

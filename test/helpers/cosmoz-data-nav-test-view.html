@@ -1,0 +1,43 @@
+<link rel="import" href="../../../polymer/polymer.html">
+<link rel="import" href="../../../paper-icon-button/paper-icon-button.html" />
+<link rel="import" href="../../../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../../iron-flex-layout/iron-flex-layout-classes.html">
+
+<dom-module id="cosmoz-data-nav-test-view">
+	<template >
+		<style>
+			.text {
+				font-size: 300px;
+				line-height: 360px;
+				text-align: center;
+			}
+		</style>
+		<div class="flex text">{{ item.id }}</div>
+		<div>
+			<paper-icon-button slot="actions" disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
+			<span>[[ index ]]</span>
+			<paper-icon-button slot="actions" disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
+		</div>
+	</template>
+	<script type="text/javascript">
+		Polymer({
+			is: 'cosmoz-data-nav-test-view',
+			properties: {
+				item: {
+					type: Object,
+					notify: true
+				},
+				index: {
+					type: Number
+				},
+				prevDisabled: {
+					type: Boolean
+				},
+				nextDisabled: {
+					type: Boolean
+				}
+			},
+		});
+	</script>
+</dom-module>
+

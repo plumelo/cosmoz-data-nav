@@ -1,39 +1,378 @@
 <!doctype html>
 <html>
-	<head>
-		<title>cosmoz-data-nav-basic</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<head>
+	<title>cosmoz-data-nav-basic</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-		<script src="../../web-component-tester/browser.js"></script>
-		<script src="../../test-fixture/test-fixture-mocha.js"></script>
+	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+	<script src="../../web-component-tester/browser.js"></script>
+	<script src="../../test-fixture/test-fixture-mocha.js"></script>
 
-		<link rel="import" href="../../test-fixture/test-fixture.html">
-		<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
-		<link rel="import" href="../cosmoz-data-nav.html">
-	</head>
-	<body>
-		<test-fixture id="defaults">
-			<template>
-				<cosmoz-data-nav></cosmoz-data-nav>
-			</template>
-		</test-fixture>
+	<link rel="import" href="../../test-fixture/test-fixture.html">
+	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
+	<link rel="import" href="../cosmoz-data-nav.html">
+	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
 
-		<script>
-			suite('defaults', function () {
-				var nav;
+	<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+	<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
 
-				setup(function (done) {
-					nav = fixture('defaults');
-					done();
-				});
+	<custom-style>
+		<style is="custom-style" include="iron-flex iron-positioning">
+			cosmoz-data-nav {
+				display: block;
+				width: 455px;
+				height: 400px;
+				position: relative;
+			}
+		</style>
+	</custom-style>
+</head><body>
+	<test-fixture id="defaults">
+		<template>
+			<cosmoz-data-nav>
+				<template>
+					<cosmoz-data-nav-test-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-test-view>
+				</template>
+			</cosmoz-data-nav>
+		</template>
+	</test-fixture>
+	<test-fixture id="elementsBuffer">
+		<template>
+			<cosmoz-data-nav elements-buffer=4>
+				<template>
+					<cosmoz-data-nav-test-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-test-view>
+				</template>
+			</cosmoz-data-nav>
+		</template>
+	</test-fixture>
+	<test-fixture id="renderQueue">
+		<template>
+			<cosmoz-data-nav elements-buffer=5>
+				<template>
+					<cosmoz-data-nav-test-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-test-view>
+				</template>
+			</cosmoz-data-nav>
+		</template>
+	</test-fixture>
 
-				test('instantiates a cosmoz-data-nav element', function (done) {
-					assert.equal(nav.is, 'cosmoz-data-nav');
-					done();
-				});
+	<script>
+	(function () {
+		'use strict';
+
+		suite('defaults', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('defaults');
+				nav.items = Array(20).fill('').map((e, i) => i.toString());
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+				done();
 			});
-		</script>
-	</body>
-</html>
+
+			test('instantiates a cosmoz-data-nav element', () => {
+				assert.equal(nav.is, 'cosmoz-data-nav');
+			});
+
+			test('creates buffer elements', () => {
+				assert.lengthOf(nav._elements, nav.elementsBuffer);
+			});
+
+			test('has template for elements', () => {
+				const template = nav.$.templatesSlot.querySelector('template');
+				assert.equal(template, nav._elementsTemplate);
+			});
+
+			test('buffer elements have incomplete content', () => {
+				nav._elements.forEach(element => assert.isNotNull(element.__incomplete));
+			});
+
+			test('buffer elements are not templatized without complete data', () => {
+				nav._elements.forEach(element => assert.isUndefined(element.__instance));
+			});
+
+			test('selects first element', () => {
+				assert.equal(nav.selected, 0);
+				const selectedEl = nav._getElement(nav.selected);
+				assert.include(nav._elements, selectedEl);
+			});
+		});
+
+		suite('properties check', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('defaults');
+				nav.items = Array(20).fill('').map((e, i) => i.toString());
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+
+				done();
+			});
+
+			test('selected property is updated', () => {
+				nav.select(1);
+				assert.equal(nav.selected, 1, 'Expected the index of selected item to be 1');
+				nav.select(3);
+				assert.equal(nav.selected, 3, 'Expected the index of selected item to be 3');
+				nav.select(7);
+				assert.equal(nav.selected, 7, 'Expected the index of selected item to be 7');
+				nav.select(2);
+				assert.equal(nav.selected, 2, 'Expected the index of selected item to be 2');
+			});
+
+			test('selectedNext is updated', () => {
+				nav.select(13);
+				assert.equal(nav.selectedNext, 14);
+				nav.select(2);
+				assert.equal(nav.selectedNext, 3);
+				nav.select(7);
+				assert.equal(nav.selectedNext, 8);
+				nav.select(0);
+				assert.equal(nav.selectedNext, 1);
+			});
+
+			test('queueLength returns the length of items array', () => {
+				assert.equal(nav.queueLength, 20);
+			});
+
+			test('reverse property is working', () => {
+				nav.select(5);
+				assert.isFalse(nav.reverse);
+				nav.select(15);
+				assert.isFalse(nav.reverse);
+				nav.select(5);
+				assert.isTrue(nav.reverse);
+				nav.select(2);
+				assert.isTrue(nav.reverse);
+				nav.select(3);
+				assert.isFalse(nav.reverse);
+			});
+		});
+
+		suite('cache', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('defaults');
+				nav.items = Array(20).fill('').map((e, i) => i.toString());
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+
+				done();
+			});
+
+			test('cache stores one item', done => {
+				nav.setItemById('1', { id: 88 });
+				Polymer.Base.async(() => {
+					let cache = nav._cache;
+					assert.equal(cache['1'].id, 88);
+					done();
+				}, 70);
+			});
+
+			test('cache stores two items', done => {
+				nav.setItemById('1', { id: 88 });
+				nav.setItemById('2', { id: 99 });
+				Polymer.Base.async(() => {
+					let cache = nav._cache;
+					assert.equal(cache['1'].id, 88);
+					assert.equal(cache['2'].id, 99);
+					done();
+				}, 50);
+			});
+
+			test('clearCache method works', done => {
+				nav.setItemById('1', { id: 1 });
+				nav.setItemById('2', { id: 2 });
+				Polymer.Base.async(() => {
+					let cache = nav._cache;
+					assert.equal(cache['1'].id, 1);
+					assert.equal(cache['2'].id, 2);
+					nav.clearCache();
+					assert.deepEqual(nav._cache, {});
+					done();
+				}, 70);
+			});
+
+			test('removeFromCache method works', done => {
+				nav.setItemById('1', { id: 88 });
+				nav.setItemById('2', { id: 99 });
+				nav.setItemById('3', { id: 11 });
+				Polymer.Base.async(() => {
+					let cache = nav._cache;
+					assert.equal(cache['1'].id, 88);
+					assert.equal(cache['2'].id, 99);
+					assert.equal(cache['3'].id, 11);
+
+					nav.removeFromCache(cache['2']);
+					assert.isUndefined(nav._cache['2']);
+					assert.equal(Object.keys(nav._cache).length, 2);
+					nav.removeFromCache(cache['1']);
+					assert.isUndefined(nav._cache['1']);
+					assert.equal(Object.keys(nav._cache).length, 1);
+					done();
+				}, 50);
+			});
+		});
+
+		suite('other methods', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('defaults');
+				nav.items = Array(20).fill('').map((e, i) => i.toString());
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+
+				done();
+			});
+
+			test('isIncompleteFn checks if an item is incomplete', done => {
+				assert.isTrue(nav.isIncompleteFn());
+				assert.isTrue(nav.isIncompleteFn(null));
+				assert.isFalse(nav.isIncompleteFn({id: '1'}));
+
+				nav.setItemById('1', { id: 1 });
+				Polymer.Base.async(() => {
+					assert.isTrue(nav.isIncompleteFn(nav.items[0]));
+					assert.isFalse(nav.isIncompleteFn(nav.items[1]));
+					done();
+				}, 70);
+			});
+
+			test('selectById updates selected property', () => {
+				nav.setItemById('0', { id: 0 });
+				nav.setItemById('14', { id: 14 });
+				nav.setItemById('2', { id: 2 });
+				nav.setItemById('9', { id: 9 });
+				nav.setItemById('17', { id: 17 });
+				nav.selectById(2);
+				assert.equal(nav.selected, 2);
+				nav.selectById(14);
+				assert.equal(nav.selected, 14);
+				nav.selectById(0);
+				assert.equal(nav.selected, 0);
+				nav.selectById(17);
+				assert.equal(nav.selected, 17);
+			});
+
+			test('preloads data', done => {
+				const data = {id: '0'};
+				assert.isTrue(nav.isIncompleteFn(nav.items[0]));
+				assert.equal(nav._preloadIdx, 0);
+
+				nav.setItemById('0', data);
+				Polymer.Base.async(() => {
+					assert.equal(nav._preloadIdx, 1);
+					assert.isFalse(nav.isIncompleteFn(nav.items[0]));
+					assert.deepEqual(nav.items[0], data);
+					done();
+				}, 400);
+			});
+		});
+
+		suite('elements buffer', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('elementsBuffer');
+				nav.items = Array(10).fill('').map((e, i) => i.toString());
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+
+				done();
+			});
+
+			test('instantiates a cosmoz-data-nav element', () => {
+				assert.equal(nav.is, 'cosmoz-data-nav');
+			});
+
+			test('elementsBuffer property updates _elements', () => {
+				assert.equal(nav.elementsBuffer, 4);
+				assert.equal(nav._elements.length, 4);
+			});
+
+			test('_createElement does not create element if length is equal to elementsBuffer', done => {
+				assert.equal(nav.elementsBuffer, 4);
+				assert.equal(nav._elements.length, 4);
+
+				nav._createElement();
+				assert.equal(nav._elements.length, 4);
+				done();
+			});
+
+			test('_createElement returns new element', () => {
+				const el = nav._createElement();
+				assert.equal(el.classList[0], 'animatable');
+			});
+		});
+
+		suite('renderQueue', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('renderQueue');
+				nav.items = Array(10).fill('').map((e, i) => i.toString());
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+
+				done();
+			});
+
+			test('instantiates a cosmoz-data-nav element', () => {
+				assert.equal(nav.is, 'cosmoz-data-nav');
+			});
+
+			test('renderQueue three items', done => {
+				nav._elements.forEach(element => assert.isUndefined(element.__instance));
+				nav.setItemById('0', { id: 0 });
+				nav.setItemById('1', { id: 1 });
+				nav.setItemById('2', { id: 2 });
+				Polymer.Base.async(() => {
+					const elements = nav._elements;
+					assert.deepEqual(elements[0].__instance.item, { id: 0 });
+					assert.deepEqual(elements[1].__instance.item, { id: 1 });
+					assert.deepEqual(elements[2].__instance.item, { id: 2 });
+					done();
+				}, 1500);
+			});
+
+			test('renderQueue five items', done => {
+				nav._elements.forEach(element => assert.isUndefined(element.__instance));
+				const ids = [0, 1, 2, 3, 4];
+				ids.forEach(id => {
+					nav.setItemById(id.toString(), { id: id });
+				});
+				Polymer.Base.async(() => {
+					const elements = nav._elements;
+					assert.equal(elements.length, 5);
+					elements.forEach((el, id) => {
+						assert.deepEqual(el.__instance.item, { id: id });
+					});
+					done();
+				}, 1500);
+			});
+		});
+	}());
+	</script>
+</body></html>
