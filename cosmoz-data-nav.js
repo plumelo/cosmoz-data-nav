@@ -900,7 +900,7 @@
 			const hashParam = this.hashParam,
 				idPath = this.idPath;
 
-			if (!(hashParam && idPath && this._routeHashParams && this.items.length)) {
+			if (!hashParam || !idPath || !this._routeHashParams || !this.items.length) {
 				return;
 			}
 
