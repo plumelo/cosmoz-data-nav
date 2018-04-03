@@ -447,11 +447,9 @@
 			}
 
 			let index = 0;
-
 			if (this.maintainSelection && this.selected > 0) {
 				const selectedId = this._getItemId(this.selectedItem);
-				index = items.findIndex(item => this._getItemId(item) === selectedId);
-				index = Math.max(index, 0);
+				index = Math.max(0, items.findIndex(item => this._getItemId(item) === selectedId));
 			}
 
 			if (this.selected === index) {
