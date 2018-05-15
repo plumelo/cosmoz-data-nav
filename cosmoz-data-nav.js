@@ -819,6 +819,9 @@
 
 		_forwardItem(element, item, idx) {
 			this._removeInstance(element.__instance);
+			if (Polymer.flush) {
+				Polymer.flush();
+			}
 			const instance = new this._elementCtor({});
 			Object.assign(instance, { [this.as]: item }, this._getBaseProps(idx));
 
