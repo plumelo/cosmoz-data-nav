@@ -256,21 +256,27 @@
 			this._cache = {};
 			this._indexRenderQueue = [];
 			this.unlisten(window, 'cosmoz-cache-purge', '_onCachePurge');
+			this.cancelDebouncer('select');
+			this.splice('_elements', 0, this._elements.length, this._createElement())
+				.forEach(element => {
+					this._removeInstance(element.__instance);
+					this._removeInstance(element.__incomplete);
+					element.__instance = element.__incomplete = null;
+				});
 		},
 
 		_onTemplatesChange(change) {
-			if (this._elementTemplate) {
-				return;
-			}
-			const templates = change.addedNodes.filter(n => n.nodeType === Node.ELEMENT_NODE && n.tagName === 'TEMPLATE'),
-				elementTemplate = templates.find(n => n.matches(':not([incomplete])')),
-				incompleteTemplate = templates.find(n => n.matches('[incomplete]')) || this.$.incompleteTemplate;
+			if (!this._elementTemplate) {
+				const templates = change.addedNodes.filter(n => n.nodeType === Node.ELEMENT_NODE && n.tagName === 'TEMPLATE'),
+					elementTemplate = templates.find(n => n.matches(':not([incomplete])')),
+					incompleteTemplate = templates.find(n => n.matches('[incomplete]')) || this.$.incompleteTemplate;
 
-			if (!elementTemplate) {
-				console.warn('cosmoz-data-nav requires a template');
-				return;
+				if (!elementTemplate) {
+					console.warn('cosmoz-data-nav requires a template');
+					return;
+				}
+				this._templatize(elementTemplate, incompleteTemplate);
 			}
-			this._templatize(elementTemplate, incompleteTemplate);
 
 			const elements = this._elements,
 				length = elements.length;
@@ -813,6 +819,9 @@
 
 		_forwardItem(element, item, idx) {
 			this._removeInstance(element.__instance);
+			if (Polymer.flush) {
+				Polymer.flush();
+			}
 			const instance = new this._elementCtor({});
 			Object.assign(instance, { [this.as]: item }, this._getBaseProps(idx));
 
