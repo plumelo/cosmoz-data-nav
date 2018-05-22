@@ -402,7 +402,8 @@
 		 * @return {void}
 		 */
 		setItemById(id, item) {
-			const index = this.items.indexOf(id);
+			const index = this.items
+				.findIndex(item => item === id || item[this.idPath] === id);
 
 			if (index < 0) {
 				console.warn('trying to replace an item that is not in the list', id, item);
