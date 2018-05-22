@@ -210,6 +210,14 @@
 			idPath: {
 				type: String,
 				value: 'id'
+			},
+
+			/**
+			 * True if element should render items even if it is not visible.
+			 */
+			hiddenRendering: {
+				type: Boolean,
+				value: false
 			}
 		},
 
@@ -832,6 +840,9 @@
 		},
 
 		_renderQueue() {
+			if (!this.attached) {
+				return;
+			}
 			const queue = this._indexRenderQueue;
 
 			if (!Array.isArray(queue) || queue.length < 1) {
@@ -844,15 +855,18 @@
 				return;
 			}
 
-			this._renderRan = this._renderAbort = false;
+			if (this.hiddenRendering || this._isVisible) {
 
-			this._indexRenderQueue = queue
-				.sort((a, b) => a === this.selected ? -1 : b === this.selected ? 1 : 0)
-				.map(this._renderQueueProcess, this)
-				.filter(idx => idx != null);
+				this._renderRan = this._renderAbort = false;
 
-			if (this._renderAbort || this._indexRenderQueue.length === 0) {
-				return;
+				this._indexRenderQueue = queue
+					.sort((a, b) => a === this.selected ? -1 : b === this.selected ? 1 : 0)
+					.map(this._renderQueueProcess, this)
+					.filter(idx => idx != null);
+
+				if (this._renderAbort || this._indexRenderQueue.length === 0) {
+					return;
+				}
 			}
 
 			_asyncPeriod(this._renderQueue.bind(this));
