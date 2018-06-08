@@ -222,7 +222,8 @@
 		},
 
 		behaviors: [
-			Polymer.IronResizableBehavior
+			Polymer.IronResizableBehavior,
+			Cosmoz.TranslatableBehavior
 		],
 
 		listeners: {
