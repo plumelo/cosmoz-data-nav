@@ -250,6 +250,15 @@
 				done();
 			});
 
+			test('setItemById warns about a unknown item', done => {
+				const warnSpy = sinon.spy(console, 'warn');
+				const data = {id: 23};
+				nav.setItemById('23', data);
+				assert.isTrue(warnSpy.calledWithExactly('trying to replace an item that is not in the list', '23', data), true);
+				warnSpy.restore();
+				done();
+			});
+
 			test('isIncompleteFn checks if an item is incomplete', done => {
 				assert.isTrue(nav.isIncompleteFn());
 				assert.isTrue(nav.isIncompleteFn(null));
