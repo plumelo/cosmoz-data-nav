@@ -59,6 +59,7 @@
 	<script>
 	(function () {
 		'use strict';
+		sinon.assert.expose(chai.assert, { prefix: '' });
 
 		suite('defaults', () => {
 			let nav;
@@ -168,62 +169,70 @@
 				} else {
 					Polymer.dom.flush();
 				}
+				done();
+			});
+			test('cache stores one item', done => {
+				let cache = nav._cache;
+				nav.setItemById('1', { id: 88 });
+				assert.equal(cache['1'].id, 88);
+				done();
+			});
+
+			test('cache stores two items', done => {
+				let cache = nav._cache;
+				nav.setItemById('1', { id: 88 });
+				nav.setItemById('2', { id: 99 });
+				assert.equal(cache['1'].id, 88);
+				assert.equal(cache['2'].id, 99);
+				done();
+			});
+
+			test('clearCache method works', done => {
+				let cache = nav._cache;
+				nav.setItemById('1', { id: 1 });
+				nav.setItemById('2', { id: 2 });
+				assert.equal(cache['1'].id, 1);
+				assert.equal(cache['2'].id, 2);
+				nav.clearCache();
+				assert.deepEqual(nav._cache, {});
+				done();
+			});
+
+			test('removeFromCache method works', done => {
+				let cache = nav._cache;
+				nav.setItemById('1', { id: 88 });
+				nav.setItemById('2', { id: 99 });
+				nav.setItemById('3', { id: 11 });
+				assert.equal(cache['1'].id, 88);
+				assert.equal(cache['2'].id, 99);
+				assert.equal(cache['3'].id, 11);
+
+				nav.removeFromCache(cache['2']);
+				assert.isUndefined(nav._cache['2']);
+				assert.equal(Object.keys(nav._cache).length, 2);
+				nav.removeFromCache(cache['1']);
+				assert.isUndefined(nav._cache['1']);
+				assert.equal(Object.keys(nav._cache).length, 1);
+				done();
+			});
+
+			test('removeFromCache called with null or unknown item', done => {
+				let cache = nav._cache,
+					cacheKeys;
+				nav.setItemById('1', { id: 900 });
+				assert.equal(cache['1'].id, 900);
+
+				cacheKeys = Object.keys(cache);
+				nav.removeFromCache(null);
+				assert.equal(cacheKeys.length, Object.keys(cache).length);
+
+				cacheKeys = Object.keys(cache);
+				nav.removeFromCache({});
+				assert.equal(cacheKeys.length, Object.keys(cache).length);
 
 				done();
 			});
 
-			test('cache stores one item', done => {
-				nav.setItemById('1', { id: 88 });
-				Polymer.Base.async(() => {
-					let cache = nav._cache;
-					assert.equal(cache['1'].id, 88);
-					done();
-				}, 70);
-			});
-
-			test('cache stores two items', done => {
-				nav.setItemById('1', { id: 88 });
-				nav.setItemById('2', { id: 99 });
-				Polymer.Base.async(() => {
-					let cache = nav._cache;
-					assert.equal(cache['1'].id, 88);
-					assert.equal(cache['2'].id, 99);
-					done();
-				}, 50);
-			});
-
-			test('clearCache method works', done => {
-				nav.setItemById('1', { id: 1 });
-				nav.setItemById('2', { id: 2 });
-				Polymer.Base.async(() => {
-					let cache = nav._cache;
-					assert.equal(cache['1'].id, 1);
-					assert.equal(cache['2'].id, 2);
-					nav.clearCache();
-					assert.deepEqual(nav._cache, {});
-					done();
-				}, 70);
-			});
-
-			test('removeFromCache method works', done => {
-				nav.setItemById('1', { id: 88 });
-				nav.setItemById('2', { id: 99 });
-				nav.setItemById('3', { id: 11 });
-				Polymer.Base.async(() => {
-					let cache = nav._cache;
-					assert.equal(cache['1'].id, 88);
-					assert.equal(cache['2'].id, 99);
-					assert.equal(cache['3'].id, 11);
-
-					nav.removeFromCache(cache['2']);
-					assert.isUndefined(nav._cache['2']);
-					assert.equal(Object.keys(nav._cache).length, 2);
-					nav.removeFromCache(cache['1']);
-					assert.isUndefined(nav._cache['1']);
-					assert.equal(Object.keys(nav._cache).length, 1);
-					done();
-				}, 50);
-			});
 		});
 
 		suite('other methods', () => {
@@ -247,11 +256,9 @@
 				assert.isFalse(nav.isIncompleteFn({id: '1'}));
 
 				nav.setItemById('1', { id: 1 });
-				Polymer.Base.async(() => {
-					assert.isTrue(nav.isIncompleteFn(nav.items[0]));
-					assert.isFalse(nav.isIncompleteFn(nav.items[1]));
-					done();
-				}, 70);
+				assert.isTrue(nav.isIncompleteFn(nav.items[0]));
+				assert.isFalse(nav.isIncompleteFn(nav.items[1]));
+				done();
 			});
 
 			test('selectById updates selected property', () => {
