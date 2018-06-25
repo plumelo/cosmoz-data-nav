@@ -158,6 +158,40 @@
 			});
 		});
 
+		suite('duplicate ids', () => {
+			let nav;
+
+			setup(done => {
+				nav = fixture('defaults');
+
+				const items = Array(20).fill('').map((e, i) => i.toString());
+				items[0] = '0';
+				items[1] = '0';
+				nav.items = items;
+
+				if (nav._templatesObserver.flush) {
+					nav._templatesObserver.flush();
+				} else {
+					Polymer.dom.flush();
+				}
+				done();
+			});
+
+			test('setItemById handlers duplicate ids', done => {
+				const warnSpy = sinon.spy(console, 'warn');
+				const data = {id: 0};
+				const cache = nav._cache;
+				nav.setItemById('0', data);
+				assert.isTrue(warnSpy.calledWithExactly('found multiple items with same id'), true);
+				assert.equal(cache['0'].id, data.id);
+				assert.equal(nav.items[0].id, data.id);
+				assert.equal(nav.items[1].id, data.id);
+				warnSpy.restore();
+				done();
+
+			});
+		});
+
 		suite('cache', () => {
 			let nav;
 
