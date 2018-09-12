@@ -47,6 +47,17 @@
 
 		sinon.assert.expose(chai.assert, { prefix: '' });
 
+		const whenFirstElementsRenderer = (nav, done) => {
+			let listener;
+			nav.addEventListener('iron-request-resize-notifications', listener = () => {
+				const rendered = nav._elements.filter(e => e.__instance != null && e.__incomplete != null);
+				if (rendered.length === nav.elementsBuffer) {
+					nav.removeEventListener('iron-request-resize-notifications', listener);
+					done();
+				}
+			});
+		};
+
 		suite('resizable', function () {
 			var nav;
 
@@ -66,20 +77,21 @@
 			});
 
 			test('resize', function (done) {
-				nav.setItemById('0', { id: 0 });
-				nav.setItemById('1', { id: 1 });
-				nav.setItemById('2', { id: 2 });
-
-				Polymer.Base.async(function () {
+				whenFirstElementsRenderer(nav, () => {
 					const view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view'),
 						spy = sinon.spy(view, '_onIronResize');
 					nav.notifyResize();
 					assert.calledOnce(spy);
 					assert.equal(nav._interestedResizables.length, 6);
-
 					assert.isTrue(nav.resizerShouldNotify(view));
+					spy.restore();
 					done();
-				}, 1000);
+				});
+
+				nav.setItemById('0', { id: 0 });
+				nav.setItemById('1', { id: 1 });
+				nav.setItemById('2', { id: 2 });
+
 			});
 		});
 	}());
