@@ -489,15 +489,20 @@
 		 * @return {void}
 		 */
 		_updateSelected(selected = this.selected, previous) {
-			this._setSelectedNext((selected || 0) + 1);
-			this._preload(selected);
+			const position = selected < this.items.length ? selected : selected - 1;
+			this._setSelectedNext((position || 0) + 1);
+			this._preload(position);
 
-			const element = this._getElement(selected);
+			const element = this._getElement(position);
 
-			this._updateHashForSelected(selected);
+			if (!element) {
+				return;
+			}
+
+			this._updateHashForSelected(position);
 
 			const classes = element.classList,
-				animating = this.animating && previous != null && previous !== selected,
+				animating = this.animating && previous != null && previous !== position,
 				prev = animating && this._getElement(previous);
 
 			if (!animating) {
@@ -575,7 +580,7 @@
 			return {
 				prevDisabled: index < 1,
 				nextDisabled: index + 1  >= this.items.length,
-				[this.indexAs]: Math.max(index, 0)
+				[this.indexAs]: Math.min(Math.max(index, 0), this.items.length - 1)
 			};
 		},
 
