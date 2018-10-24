@@ -683,7 +683,7 @@
 			if (this.animating) {
 				return;
 			}
-			const path = Polymer.dom(event).path,
+			const path = event.composedPath(),
 				attr = this.selectAttribute,
 				selectEl = path.find(e => e && e.hasAttribute && e.hasAttribute(attr));
 
