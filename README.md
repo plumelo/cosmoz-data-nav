@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Neovici/cosmoz-data-nav.svg?branch=master)](https://travis-ci.org/Neovici/cosmoz-data-nav)
+[![Sauce Test Status](https://saucelabs.com/buildstatus/nomego)](https://saucelabs.com/u/nomego)
 [![Code Climate](https://codeclimate.com/github/codeclimate/codeclimate/badges/gpa.svg)](https://codeclimate.com/github/Neovici/cosmoz-data-nav)
 [![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/Neovici/cosmoz-data-nav)
 
@@ -39,3 +40,11 @@ $ polymer test
 ```
 
 Your application is already set up to be tested via [web-component-tester](https://github.com/Polymer/web-component-tester). Run `polymer test` to run your application's test suite locally.
+
+### Big Thanks
+
+Cross-browser Testing Platform and Open Source <3 Provided by [Sauce Labs][sauce_homepage]
+
+[![Sauce Test Status](https://saucelabs.com/browser-matrix/nomego.svg)](https://saucelabs.com/u/nomego)
+
+[sauce_homepage]: https://saucelabs.com
