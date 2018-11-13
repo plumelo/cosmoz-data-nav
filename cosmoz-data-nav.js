@@ -565,7 +565,14 @@
 			const item = items[index];
 
 			if (this.isIncompleteFn(item)) {
-				this.fire('need-data', { id: item, render: true });
+				this.dispatchEvent(new CustomEvent('need-data', {
+					bubbles: true,
+					composed: true,
+					detail: {
+						id: item,
+						render: true
+					}
+				}));
 				return;
 			}
 
