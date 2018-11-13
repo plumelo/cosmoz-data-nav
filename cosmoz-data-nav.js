@@ -247,8 +247,7 @@
 		 * @return {void}
 		 */
 		attached() {
-			this._templatesObserver = Polymer.dom(this.$.templatesSlot)
-				.observeNodes(this._onTemplatesChange.bind(this));
+			this._templatesObserver = new Polymer.FlattenedNodesObserver(this.$.templatesSlot, this._onTemplatesChange.bind(this));
 			this.listen(window, 'cosmoz-cache-purge', '_onCachePurge');
 		},
 
@@ -259,7 +258,7 @@
 		 */
 		detached() {
 			if (this._templatesObserver) {
-				Polymer.dom(this).unobserveNodes(this._templatesObserver);
+				this._templatesObserver.disconnect();
 				this._templatesObserver = null;
 			}
 			this._cache = {};
