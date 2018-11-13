@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
 	<title>cosmoz-data-nav-resizable</title>
 	<meta charset="utf-8">
@@ -8,6 +9,8 @@
 	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
 	<script src="../../web-component-tester/browser.js"></script>
 	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+
+	<link rel="import" href="../../polymer/lib/elements/custom-style.html">
 
 	<link rel="import" href="../../test-fixture/test-fixture.html">
 	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
@@ -19,7 +22,7 @@
 	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
 
 	<custom-style>
-		<style is="custom-style" include="iron-flex iron-positioning">
+		<style include="iron-flex iron-positioning">
 			cosmoz-data-nav {
 				display: block;
 				width: 455px;
@@ -28,7 +31,9 @@
 			}
 		</style>
 	</custom-style>
-</head><body>
+</head>
+
+<body>
 	<test-fixture id="resizable">
 		<template>
 			<cosmoz-data-nav>
@@ -41,59 +46,61 @@
 	</test-fixture>
 
 	<script>
-	/*global sinon chai flush */
-	(function () {
-		'use strict';
+		/*global sinon chai flush */
+		(function () {
+			'use strict';
 
-		sinon.assert.expose(chai.assert, { prefix: '' });
+			sinon.assert.expose(chai.assert, { prefix: '' });
 
-		const whenFirstElementsRenderer = (nav, done) => {
-			let listener;
-			nav.addEventListener('iron-request-resize-notifications', listener = () => {
-				const rendered = nav._elements.filter(e => e.__instance != null && e.__incomplete != null);
-				if (rendered.length === nav.elementsBuffer) {
-					nav.removeEventListener('iron-request-resize-notifications', listener);
-					done();
-				}
-			});
-		};
+			const whenFirstElementsRenderer = (nav, done) => {
+				let listener;
+				nav.addEventListener('iron-request-resize-notifications', listener = () => {
+					const rendered = nav._elements.filter(e => e.__instance != null && e.__incomplete != null);
+					if (rendered.length === nav.elementsBuffer) {
+						nav.removeEventListener('iron-request-resize-notifications', listener);
+						done();
+					}
+				});
+			};
 
-		suite('resizable', function () {
-			var nav;
+			suite('resizable', () => {
+				let nav;
 
-			setup(function (done) {
-				nav = fixture('resizable');
-				nav.items = Array(10).fill('').map((e, i) => i.toString());
-				if (nav._templatesObserver.flush) {
-					nav._templatesObserver.flush();
-				} else {
-					Polymer.dom.flush();
-				}
-				done();
-			});
-
-			test('instantiates a cosmoz-data-nav element', function () {
-				assert.equal(nav.is, 'cosmoz-data-nav');
-			});
-
-			test('resize', function (done) {
-				whenFirstElementsRenderer(nav, () => {
-					const view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view'),
-						spy = sinon.spy(view, '_onIronResize');
-					nav.notifyResize();
-					assert.calledOnce(spy);
-					assert.equal(nav._interestedResizables.length, 6);
-					assert.isTrue(nav.resizerShouldNotify(view));
-					spy.restore();
+				setup(done => {
+					nav = fixture('resizable');
+					nav.items = Array(10).fill('').map((e, i) => i.toString());
+					if (nav._templatesObserver.flush) {
+						nav._templatesObserver.flush();
+					} else {
+						Polymer.dom.flush();
+					}
 					done();
 				});
 
-				nav.setItemById('0', { id: 0 });
-				nav.setItemById('1', { id: 1 });
-				nav.setItemById('2', { id: 2 });
+				test('instantiates a cosmoz-data-nav element', () => {
+					assert.equal(nav.is, 'cosmoz-data-nav');
+				});
 
+				test('resize', done => {
+					whenFirstElementsRenderer(nav, () => {
+						const view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view'),
+							spy = sinon.spy(view, '_onIronResize');
+						nav.notifyResize();
+						assert.calledOnce(spy);
+						assert.equal(nav._interestedResizables.length, 6);
+						assert.isTrue(nav.resizerShouldNotify(view));
+						spy.restore();
+						done();
+					});
+
+					nav.setItemById('0', { id: 0 });
+					nav.setItemById('1', { id: 1 });
+					nav.setItemById('2', { id: 2 });
+
+				});
 			});
-		});
-	}());
+		}());
 	</script>
-</body></html>
+</body>
+
+</html>

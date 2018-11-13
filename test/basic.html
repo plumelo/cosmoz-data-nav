@@ -14,11 +14,11 @@
 	<link rel="import" href="../cosmoz-data-nav.html">
 	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
 
-	<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
-	<link rel="import" href="../iron-flex-layout/iron-flex-layout-classes.html">
+	<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
 
 	<custom-style>
-		<style is="custom-style" include="iron-flex iron-positioning">
+		<style include="iron-flex iron-positioning">
 			cosmoz-data-nav {
 				display: block;
 				width: 455px;
@@ -411,13 +411,13 @@
 				nav._elements.forEach(element => assert.isUndefined(element.__instance));
 				const ids = [0, 1, 2, 3, 4];
 				ids.forEach(id => {
-					nav.setItemById(id.toString(), { id: id });
+					nav.setItemById(id.toString(), { id });
 				});
 				Polymer.Base.async(() => {
 					const elements = nav._elements;
 					assert.equal(elements.length, 5);
 					elements.forEach((el, id) => {
-						assert.deepEqual(el.__instance.item, { id: id });
+						assert.deepEqual(el.__instance.item, { id });
 					});
 					done();
 				}, 1500);

@@ -1,26 +1,29 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-		<title>cosmoz-data-nav demo</title>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+	<title>cosmoz-data-nav demo</title>
 
-		<link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html" />
-		<link rel="import" href="../../iron-demo-helpers/demo-snippet.html" />
+	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
 
-		<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
-		<link rel="import" href="../../paper-spinner/paper-spinner-lite.html">
-		<link rel="import" href="../../paper-input/paper-textarea.html">
-		<link rel="import" href="../../iron-icons/iron-icons.html" />
-		<link rel="import" href="./helpers/cosmoz-demo-view.html" />
-		<link rel="import" href="../cosmoz-data-nav.html" />
+	<link rel="import" href="../../polymer/lib/elements/custom-style.html">
 
-		<custom-style>
-			<style is="custom-style" include="demo-pages-shared-styles iron-flex iron-positioning">
-				#container {
+	<link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html" />
+	<link rel="import" href="../../iron-demo-helpers/demo-snippet.html" />
+
+	<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
+	<link rel="import" href="../../paper-spinner/paper-spinner-lite.html">
+	<link rel="import" href="../../paper-input/paper-textarea.html">
+	<link rel="import" href="../../iron-icons/iron-icons.html" />
+	<link rel="import" href="./helpers/cosmoz-demo-view.html" />
+	<link rel="import" href="../cosmoz-data-nav.html" />
+
+	<custom-style>
+		<style include="demo-pages-shared-styles iron-flex iron-positioning">
+			#container {
 					max-width: 800px;
 				}
 				cosmoz-data-nav {
@@ -38,32 +41,35 @@
 					background-color: orange;
 				}
 			</style>
-		</custom-style>
-	</head>
-	<body unresolved>
-		<div id="container" class="vertical-section-container centered">
-			<h3>Basic <code>cosmoz-data-nav</code>.</h3>
-			<demo-snippet>
-				<template>
-					<dom-bind id="basic">
-						<template is="dom-bind">
-							<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}" hash-param="tt">
-								<template>
-									<cosmoz-demo-view class="fit layout vertical" item="{{ item }}" index="[[index]]" data-idx$="{{ computeColorIndex(index) }}"
-									prev-disabled="[[ prevDisabled ]]" next-disabled="[[ nextDisabled ]]"></cosmoz-demo-view>
-								</template>
-							</cosmoz-data-nav>
-							<paper-textarea value="{{ computeJSON(selected, items.*) }}"><paper-textarea>
-						</template>
-					</dom-bind>
-				</template>
-			</demo-snippet>
-		</div>
-		<script type="text/javascript">
+	</custom-style>
+</head>
+
+<body unresolved>
+	<div id="container" class="vertical-section-container centered">
+		<h3>Basic <code>cosmoz-data-nav</code>.</h3>
+		<demo-snippet>
+			<template>
+				<dom-bind id="basic">
+					<template is="dom-bind">
+						<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}"
+						 hash-param="tt">
+							<template>
+								<cosmoz-demo-view class="fit layout vertical" item="{{ item }}" index="[[index]]" data-idx$="{{ computeColorIndex(index) }}"
+								 prev-disabled="[[ prevDisabled ]]" next-disabled="[[ nextDisabled ]]"></cosmoz-demo-view>
+							</template>
+						</cosmoz-data-nav>
+						<paper-textarea value="{{ computeJSON(selected, items.*) }}">
+							<paper-textarea>
+					</template>
+				</dom-bind>
+			</template>
+		</demo-snippet>
+	</div>
+	<script type="text/javascript">
 		(function () {
-			window.addEventListener('WebComponentsReady', function () {
-				let basic = document.getElementById('basic'),
-					items =  Array(20).fill('').map((e, i) => i.toString()),
+			window.addEventListener('WebComponentsReady', () => {
+				let basic = document.getElementById('basic');
+				const items = Array(20).fill('').map((e, i) => i.toString()),
 					asyncs = {};
 
 				basic = !basic.set ? basic.firstElementChild : basic;
@@ -91,6 +97,7 @@
 
 			///
 		})();
-		</script>
-	</body>
+	</script>
+</body>
+
 </html>

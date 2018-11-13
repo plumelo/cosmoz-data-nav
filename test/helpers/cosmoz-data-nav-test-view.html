@@ -1,10 +1,10 @@
-<link rel="import" href="../../../polymer/polymer.html">
+<link rel="import" href="../../../polymer/polymer-element.html">
 <link rel="import" href="../../../paper-icon-button/paper-icon-button.html" />
 <link rel="import" href="../../../iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../../../iron-flex-layout/iron-flex-layout-classes.html">
 
 <dom-module id="cosmoz-data-nav-test-view">
-	<template >
+	<template>
 		<style>
 			.text {
 				font-size: 300px;
@@ -20,9 +20,12 @@
 		</div>
 	</template>
 	<script type="text/javascript">
-		Polymer({
-			is: 'cosmoz-data-nav-test-view',
-			properties: {
+	class CosmozDataNavTestView extends Polymer.Element {
+		static get is() {
+			return 'cosmoz-data-nav-test-view';
+		}
+		static get properties() {
+			return {
 				item: {
 					type: Object,
 					notify: true
@@ -36,8 +39,10 @@
 				nextDisabled: {
 					type: Boolean
 				}
-			},
-		});
+			};
+		}
+	}
+	customElements.define(CosmozDataNavTestView.is, CosmozDataNavTestView);
 	</script>
 </dom-module>
 
