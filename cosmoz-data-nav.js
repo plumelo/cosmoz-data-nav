@@ -264,7 +264,9 @@
 			this._cache = {};
 			this._indexRenderQueue = [];
 			this.unlisten(window, 'cosmoz-cache-purge', '_onCachePurge');
-			this.cancelDebouncer('select');
+			if (this._selectDebouncer != null) {
+				this._selectDebouncer.cancel();
+			}
 			this.splice('_elements', 0, this._elements.length, this._createElement())
 				.forEach(element => {
 					this._removeInstance(element.__instance);
@@ -702,10 +704,13 @@
 			if (isNaN(select)) {
 				return;
 			}
-			this.debounce('select', () => {
-				this.animating = true;
-				this.select(this.selected + select);
-			}, 15);
+			this._selectDebouncer = Polymer.Debouncer.debounce(this._selectDebouncer,
+				Polymer.Async.timeOut.after(15),
+				() => {
+					this.animating = true;
+					this.select(this.selected + select);
+				}
+			);
 		},
 
 		/**
