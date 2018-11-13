@@ -295,7 +295,7 @@
 				.fill().map(this._createElement, this));
 
 			_doAsyncSteps(elements.map(el => {
-				Polymer.dom(this).appendChild(el);
+				this.appendChild(el);
 				return this._createIncomplete.bind(this, el);
 			}));
 		},
@@ -378,7 +378,7 @@
 			}
 			const incomplete = new this._incompleteCtor({});
 			element.__incomplete = incomplete;
-			Polymer.dom(element).appendChild(incomplete.root);
+			element.appendChild(incomplete.root);
 		},
 
 		/**
@@ -652,7 +652,7 @@
 			for (let i = 0; i < children.length; i++) {
 				const child = children[i],
 					parent = child.parentNode;
-				Polymer.dom(parent).removeChild(child);
+				parent.removeChild(child);
 			}
 		},
 
@@ -858,7 +858,7 @@
 			element.__instance = instance;
 			element.item = item;
 			element._reset = false;
-			Polymer.dom(element).appendChild(instance.root);
+			element.appendChild(instance.root);
 		},
 
 		_renderQueue() {
