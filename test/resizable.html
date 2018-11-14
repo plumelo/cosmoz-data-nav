@@ -86,13 +86,14 @@
 
 				test('resize', done => {
 					whenFirstElementsRenderer(nav, () => {
-						const view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view'),
-							spy = sinon.spy(view, '_onIronResize');
+						const spy = sinon.spy(),
+							view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view');
+						nav.addEventListener('iron-resize', spy);
 						nav.notifyResize();
+						Polymer.flush();
 						assert.calledOnce(spy);
 						assert.equal(nav._interestedResizables.length, 6);
 						assert.isTrue(nav.resizerShouldNotify(view));
-						spy.restore();
 						done();
 					});
 
