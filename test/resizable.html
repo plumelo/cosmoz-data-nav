@@ -10,6 +10,8 @@
 	<script src="../../web-component-tester/browser.js"></script>
 	<script src="../../test-fixture/test-fixture-mocha.js"></script>
 
+	<script src="./helpers/utils.js"></script>
+
 	<link rel="import" href="../../polymer/lib/elements/custom-style.html">
 
 	<link rel="import" href="../../test-fixture/test-fixture.html">
@@ -51,6 +53,7 @@
 			'use strict';
 
 			sinon.assert.expose(chai.assert, { prefix: '' });
+			const domType = getDomType();
 
 			const whenFirstElementsRenderer = (nav, done) => {
 				let listener;
@@ -63,7 +66,7 @@
 				});
 			};
 
-			suite('resizable', () => {
+			suite(`resizable ${domType}`, () => {
 				let nav;
 
 				setup(done => {
