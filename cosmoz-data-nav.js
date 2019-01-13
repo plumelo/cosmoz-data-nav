@@ -19,260 +19,268 @@
 				_asyncPeriod(callStep, timeout);
 			};
 			return _asyncPeriod(callStep, timeout);
-		};
+		},
+		{
+			Debouncer,
+			enqueueDebouncer,
+			FlattenedNodesObserver,
+			IronResizableBehavior,
+			Templatize,
+			mixinBehaviors
+		} = Polymer;
 
-	Polymer({
-		is: 'cosmoz-data-nav',
-		properties: {
-			/**
-			 * The array of buffer elements.
-			 */
-			_elements: {
-				type: Array,
-				value() {
-					return [this._createElement()];
-				}
-			},
 
-			/**
-			 * The name of the variable to add to the binding scope for the array
-			 * element associated with a template instance.
-			 */
-			as: {
-				type: String,
-				value: 'item'
-			},
+	class CosmozDataNav extends mixinBehaviors([
+		IronResizableBehavior,
+		Cosmoz.TranslatableBehavior
+	], Polymer.Element) {
 
-			/**
-			* The name of the variable to add to the binding scope with the index
-			* for the item.
-			*/
-			indexAs: {
-				type: String,
-				value: 'index'
-			},
+		static get is() {
+			return 'cosmoz-data-nav';
+		}
 
-			/**
-			 * An array containing items from which a selection can be made.
-			 */
-			items: {
-				type: Array,
-				value() {
-					return [];
+		static get properties() {
+			return {
+				/**
+				 * The array of buffer elements.
+				 */
+				_elements: {
+					type: Array,
+					value() {
+						return [this._createElement()];
+					}
 				},
-				notify: true,
-				observer: '_itemsChanged'
-			},
 
-			/**
-			 * The length of items array.
-			 */
-			queueLength: {
-				type: Number,
-				notify: true,
-				readOnly: true
-			},
+				/**
+				 * The name of the variable to add to the binding scope for the array
+				 * element associated with a template instance.
+				 */
+				as: {
+					type: String,
+					value: 'item'
+				},
 
-			hasItems: {
-				type: Boolean,
-				readOnly: true,
-				reflectToAttribute: true
-			},
+				/**
+				 * The name of the variable to add to the binding scope with the index
+				 * for the item.
+				 */
+				indexAs: {
+					type: String,
+					value: 'index'
+				},
 
-			elementsBuffer: {
-				type: Number,
-				value: 3
-			},
+				/**
+				 * An array containing items from which a selection can be made.
+				 */
+				items: {
+					type: Array,
+					value() {
+						return [];
+					},
+					notify: true,
+					observer: '_itemsChanged'
+				},
 
-			/**
-			 * Number of items after the currently selected one to preload.
-			 */
-			preload: {
-				type: Number,
-				value: 1
-			},
+				/**
+				 * The length of items array.
+				 */
+				queueLength: {
+					type: Number,
+					notify: true,
+					readOnly: true
+				},
 
-			/**
-			 * The currently selected index.
-			 */
-			selected: {
-				type: Number,
-				value: 0,
-				notify: true,
-				observer: '_updateSelected'
-			},
+				hasItems: {
+					type: Boolean,
+					readOnly: true,
+					reflectToAttribute: true
+				},
 
-			/**
-			 * The index of the next element.
-			 */
-			selectedNext: {
-				type: Number,
-				notify: true,
-				value: 1,
-				readOnly: true
-			},
+				elementsBuffer: {
+					type: Number,
+					value: 3
+				},
 
-			/**
-			 * The currently selected element (holder)
-			 */
-			selectedElement: {
-				type: Object,
-				notify: true,
-				readOnly: true,
-				computed: '_getElement(selected, _elements.*)'
-			},
+				/**
+				 * Number of items after the currently selected one to preload.
+				 */
+				preload: {
+					type: Number,
+					value: 1
+				},
 
-			/**
-			 * The currently selected element (instance)
-			 */
-			selectedInstance: {
-				type: Object,
-				notify: true,
-				readOnly: true,
-				computed: '_getInstance(selectedElement)'
-			},
+				/**
+				 * The currently selected index.
+				 */
+				selected: {
+					type: Number,
+					value: 0,
+					notify: true,
+					observer: '_updateSelected'
+				},
 
-			/**
-			 * The currently selected item, or `null` if no item is selected.
-			 */
-			selectedItem: {
-				type: Object,
-				notify: true,
-				readOnly: true,
-				computed: '_getItem(selected, items)'
-			},
+				/**
+				 * The index of the next element.
+				 */
+				selectedNext: {
+					type: Number,
+					notify: true,
+					value: 1,
+					readOnly: true
+				},
 
-			/**
-			 * True if cosmoz-data-nav should try to maintain selection when
-			 * `items` change.
-			 */
-			maintainSelection: {
-				type: Boolean,
-				value: false
-			},
+				/**
+				 * The currently selected element (holder)
+				 */
+				selectedElement: {
+					type: Object,
+					notify: true,
+					readOnly: true,
+					computed: '_getElement(selected, _elements.*)'
+				},
 
-			/**
-			 * The attribute that elements which control the `selected` of this element
-			 * should have. The value of the attribute can be `-1` or `+1`.
-			 */
-			selectAttribute: {
-				type: String,
-				value: 'cosmoz-data-nav-select'
-			},
+				/**
+				 * The currently selected element (instance)
+				 */
+				selectedInstance: {
+					type: Object,
+					notify: true,
+					readOnly: true,
+					computed: '_getInstance(selectedElement)'
+				},
 
-			/**
-			 *  True if the element is currently animating.
-			 */
-			animating: {
-				type: Boolean,
-				value: false,
-				reflectToAttribute: true,
-			},
+				/**
+				 * The currently selected item, or `null` if no item is selected.
+				 */
+				selectedItem: {
+					type: Object,
+					notify: true,
+					readOnly: true,
+					computed: '_getItem(selected, items)'
+				},
 
-			/**
-			 * True if selecting a element with a index smaller than the current one.
-			 */
-			reverse: {
-				type: Boolean,
-				value: false,
-				reflectToAttribute: true,
-			},
+				/**
+				 * True if cosmoz-data-nav should try to maintain selection when
+				 * `items` change.
+				 */
+				maintainSelection: {
+					type: Boolean,
+					value: false
+				},
 
-			/**
-			 * Function used to determine if a item is incomplete and needs to be preloaded.
-			 * The default values is a function that requires item to be a `Object`.
-			 */
-			isIncompleteFn: {
-				type: Function,
-				value() {
-					return item => item == null || typeof item !== 'object';
+				/**
+				 * The attribute that elements which control the `selected` of this element
+				 * should have. The value of the attribute can be `-1` or `+1`.
+				 */
+				selectAttribute: {
+					type: String,
+					value: 'cosmoz-data-nav-select'
+				},
+
+				/**
+				 *  True if the element is currently animating.
+				 */
+				animating: {
+					type: Boolean,
+					value: false,
+					reflectToAttribute: true,
+				},
+
+				/**
+				 * True if selecting a element with a index smaller than the current one.
+				 */
+				reverse: {
+					type: Boolean,
+					value: false,
+					reflectToAttribute: true,
+				},
+
+				/**
+				 * Function used to determine if a item is incomplete and needs to be preloaded.
+				 * The default values is a function that requires item to be a `Object`.
+				 */
+				isIncompleteFn: {
+					type: Function,
+					value() {
+						return item => item == null || typeof item !== 'object';
+					}
+				},
+
+				/**
+				 * The hash parameter to use for selecting an item.
+				 */
+				hashParam: {
+					type: String
+				},
+
+				/**
+				 * The route hash parameters extracted by the `cosmoz-page-location`
+				 * element.
+				 */
+				_routeHashParams: {
+					type: Object
+				},
+
+				/**
+				 *
+				 */
+				idPath: {
+					type: String,
+					value: 'id'
+				},
+
+				/**
+				 * True if element should render items even if it is not visible.
+				 */
+				hiddenRendering: {
+					type: Boolean,
+					value: false
 				}
-			},
+			};
+		}
 
-			/**
-			 * The hash parameter to use for selecting an item.
-			 */
-			hashParam: {
-				type: String
-			},
-
-			/**
-			 * The route hash parameters extracted by the `cosmoz-page-location`
-			 * element.
-			 */
-			_routeHashParams: {
-				type: Object
-			},
-
-			/**
-			 *
-			 */
-			idPath: {
-				type: String,
-				value: 'id'
-			},
-
-			/**
-			 * True if element should render items even if it is not visible.
-			 */
-			hiddenRendering: {
-				type: Boolean,
-				value: false
-			}
-		},
-
-		behaviors: [
-			Polymer.IronResizableBehavior,
-			Cosmoz.TranslatableBehavior
-		],
-
-		listeners: {
-			tap: '_onTap',
-			transitionend: '_onTransitionEnd'
-		},
-
-		/**
-		 * Polymer `created` livecycle function.
-		 *
-		 * @return {void}
-		 */
-		created() {
+		constructor() {
+			super();
 			this._cache = {};
 			this._preloadIdx = 0;
-		},
+			this._boundOnTemplatesChange = this._onTemplatesChange.bind(this);
+		}
 
-		/**
-		 * Polymer `attached` livecycle function.
-		 *
-		 * @return {void}
-		 */
-		attached() {
-			this._templatesObserver = Polymer.dom(this.$.templatesSlot)
-				.observeNodes(this._onTemplatesChange.bind(this));
-			this.listen(window, 'cosmoz-cache-purge', '_onCachePurge');
-		},
+		connectedCallback() {
+			super.connectedCallback();
+			this._templatesObserver = new FlattenedNodesObserver(
+				this.$.templatesSlot,
+				this._boundOnTemplatesChange
+			);
+			window.addEventListener('cosmoz-cache-purge', this._onCachePurge);
+			this.addEventListener('tap', this._onTap);
+			this.addEventListener('transitionend', this._onTransitionEnd);
+		}
 
-		/**
-		 * Polymer `detached` livecycle function.
-		 *
-		 * @return {void}
-		 */
-		detached() {
+		disconnectedCallback() {
+			super.disconnectedCallback();
 			if (this._templatesObserver) {
-				Polymer.dom(this).unobserveNodes(this._templatesObserver);
+				this._templatesObserver.disconnect();
 				this._templatesObserver = null;
 			}
+
+			if (this._selectDebouncer != null) {
+				this._selectDebouncer.cancel();
+			}
+
 			this._cache = {};
 			this._indexRenderQueue = [];
-			this.unlisten(window, 'cosmoz-cache-purge', '_onCachePurge');
-			this.cancelDebouncer('select');
+			window.removeEventListener('cosmoz-cache-purge', this._onCachePurge);
+			this.removeEventListener('tap', this._onTap);
+			this.removeEventListener('transitionend', this._onTransitionEnd);
+
 			this.splice('_elements', 0, this._elements.length, this._createElement())
 				.forEach(element => {
 					this._removeInstance(element.__instance);
 					this._removeInstance(element.__incomplete);
 					element.__instance = element.__incomplete = null;
 				});
-		},
+		}
 
 		_onTemplatesChange(change) {
 			if (!this._elementTemplate) {
@@ -294,10 +302,10 @@
 				.fill().map(this._createElement, this));
 
 			_doAsyncSteps(elements.map(el => {
-				Polymer.dom(this).appendChild(el);
+				this.appendChild(el);
 				return this._createIncomplete.bind(this, el);
 			}));
-		},
+		}
 
 		_templatize(elementTemplate, incompleteTemplate) {
 			this._elementTemplate = elementTemplate;
@@ -308,43 +316,30 @@
 				nextDisabled: true,
 				[this.indexAs]: true
 			};
-			this._elementCtor = Cosmoz.Templatize.templatize(this._elementTemplate, this, {
-				instanceProps: Object.assign({[this.as]: true}, baseProps),
+			this._elementCtor = Templatize.templatize(this._elementTemplate, this, {
+				instanceProps: Object.assign({ [this.as]: true }, baseProps),
 				parentModel: true,
-				forwardParentProp: this._forwardHostProp,
-				forwardParentPath: this._forwardParentPath,
 				forwardHostProp: this._forwardHostProp,
-				forwardInstanceProp: this._notifyInstanceProp,
 				notifyInstanceProp: this._notifyInstanceProp
 			});
-			this._incompleteCtor = Cosmoz.Templatize.templatize(this._incompleteTemplate, this, {
+			this._incompleteCtor = Templatize.templatize(this._incompleteTemplate, this, {
 				instanceProps: baseProps,
 				parentModel: true,
-				forwardParentProp: this._forwardHostProp,
-				forwardParentPath: this._forwardParentPath,
 				forwardHostProp: this._forwardHostProp,
 			});
-		},
+		}
 
 		get _allInstances() {
 			return this._elements
 				.reduce((p, n) => p.concat([n.__instance, n.__incomplete]), [])
 				.filter(i => i != null);
-		},
+		}
 
 		get _allElementInstances() {
 			return this._elements
 				.map(e => e.__instance)
 				.filter(i => i != null);
-		},
-
-		_forwardParentPath(path, value) {
-			const instances = this._allInstances;
-			if (!instances || !instances.length) {
-				return;
-			}
-			instances.forEach(inst => inst.notifyPath(path, value, true));
-		},
+		}
 
 		_forwardHostProp(prop, value) {
 			const instances = this._allInstances;
@@ -352,7 +347,7 @@
 				return;
 			}
 			instances.forEach(inst => IS_V2 ? inst.forwardHostProp(prop, value) : inst[prop] = value);
-		},
+		}
 
 		_notifyInstanceProp(inst, prop, value) {
 			const index = inst.index,
@@ -362,14 +357,14 @@
 			}
 			this.removeFromCache(item);
 			this.set(['items', index], value);
-		},
+		}
 
 		_createElement() {
 			const element = document.createElement('div');
 			element.setAttribute('slot', 'items');
 			element.classList.add('animatable');
 			return element;
-		},
+		}
 
 		_createIncomplete(element) {
 			if (element.__incomplete) {
@@ -377,8 +372,8 @@
 			}
 			const incomplete = new this._incompleteCtor({});
 			element.__incomplete = incomplete;
-			Polymer.dom(element).appendChild(incomplete.root);
-		},
+			element.appendChild(incomplete.root);
+		}
 
 		/**
 		 * Selects an item by index.
@@ -393,7 +388,7 @@
 			}
 			this.reverse = index < this.selected;
 			this.selected = index;
-		},
+		}
 
 		/**
 		 * Replace an id in the `items` element list with the full data of the item.
@@ -423,11 +418,11 @@
 			}
 
 			this._updateSelected();
-		},
+		}
 
 		clearCache() {
 			this._cache = {};
-		},
+		}
 
 		removeFromCache(item) {
 			if (item == null) {
@@ -438,7 +433,7 @@
 			if (key != null) {
 				delete cache[key];
 			}
-		},
+		}
 
 		/**
 		 * Observes full changes to `items` properties
@@ -478,7 +473,7 @@
 
 			this.selected = index;
 
-		},
+		}
 
 		/**
 		 * Observes changed to `selected` property and
@@ -526,7 +521,7 @@
 				}
 				classes.remove('in');
 			}, 8);
-		},
+		}
 
 		/**
 		 * Handles `transitionend` event and cleans up animation classe and properties
@@ -544,7 +539,7 @@
 			this.animating = false;
 			elements.forEach(el => el.classList.remove('in', 'out'));
 			this._synchronize();
-		},
+		}
 
 		/**
 		 * Preloads items that are not loaded depending on the currently
@@ -564,7 +559,14 @@
 			const item = items[index];
 
 			if (this.isIncompleteFn(item)) {
-				this.fire('need-data', { id: item, render: true });
+				this.dispatchEvent(new CustomEvent('need-data', {
+					bubbles: true,
+					composed: true,
+					detail: {
+						id: item,
+						render: true
+					}
+				}));
 				return;
 			}
 
@@ -574,20 +576,20 @@
 
 			this._preloadIdx = index + 1;
 			this._preload();
-		},
+		}
 
 		_getBaseProps(index) {
 			return {
 				prevDisabled: index < 1,
-				nextDisabled: index + 1  >= this.items.length,
+				nextDisabled: index + 1 >= this.items.length,
 				[this.indexAs]: Math.min(Math.max(index, 0), this.items.length - 1)
 			};
-		},
+		}
 
 		_getElement(index, _elements = this._elements) {
 			const elements = _elements && _elements.base || _elements;
-			return elements[index % (this.elementsBuffer || elements.length) ];
-		},
+			return elements[index % (this.elementsBuffer || elements.length)];
+		}
 
 		_getInstance(selectedElement) {
 			if (selectedElement == null || selectedElement.children.length < 2) {
@@ -595,11 +597,11 @@
 			}
 			// index 0 is incomplete element
 			return selectedElement.children[1];
-		},
+		}
 
 		_getItem(index, items = this.items) {
 			return items[index];
-		},
+		}
 
 		_resetElement(index) {
 			const element = this._getElement(index);
@@ -633,7 +635,7 @@
 			}
 
 			instance._showHideChildren(true);
-		},
+		}
 
 		_removeInstance(instance) {
 			if (!instance) {
@@ -644,9 +646,9 @@
 			for (let i = 0; i < children.length; i++) {
 				const child = children[i],
 					parent = child.parentNode;
-				Polymer.dom(parent).removeChild(child);
+				parent.removeChild(child);
 			}
-		},
+		}
 
 		/**
 		* Syncronizes the `items` data with the created template instances
@@ -670,7 +672,7 @@
 			this._indexRenderQueue = indexes;
 			_asyncPeriod(this._renderQueue.bind(this));
 
-		},
+		}
 
 		/**
 		 * Handle `tap` event and finds the closest item to the rootTarget that has a `selectAttribute` attribute.
@@ -703,18 +705,21 @@
 			if (isNaN(select)) {
 				return;
 			}
-			this.debounce('select', () => {
-				this.animating = true;
-				this.select(this.selected + select);
-			}, 15);
-		},
+			this._selectDebouncer = enqueueDebouncer(Debouncer.debounce(this._selectDebouncer,
+				Polymer.Async.timeOut.after(15),
+				() => {
+					this.animating = true;
+					this.select(this.selected + select);
+				}
+			));
+		}
 
 		/**
 		* True if the current element is visible.
 		*/
 		get _isVisible() {
 			return Boolean(this.offsetWidth || this.offsetHeight);
-		},
+		}
 
 		_isDescendantOf(descendant, ancestor, limit = this) {
 			let parent = descendant;
@@ -731,7 +736,7 @@
 
 			}
 			return false;
-		},
+		}
 
 		/**
 		 * Check if a element is a descendant of another element
@@ -752,7 +757,7 @@
 			return Array.from(IS_V2 ? instance.children : instance._children)
 				.filter(c => c.nodeType === Node.ELEMENT_NODE)
 				.some(child => this._isDescendantOf(descendant, child));
-		},
+		}
 
 		/**
 		 * Check if a element is a descendant of the currently selected element.
@@ -762,7 +767,7 @@
 		 */
 		resizerShouldNotify(resizable) {
 			return this._isDescendantOfElementInstance(resizable, this.selectedElement);
-		},
+		}
 
 		/**
 		 * Handles resize notifications from descendants.
@@ -780,14 +785,14 @@
 				return;
 			}
 			this._fireResize();
-		},
+		}
 
 		notifyResize() {
 			if (!this.isAttached || this.animating || !this._isVisible) {
 				return;
 			}
 			Polymer.IronResizableBehavior.notifyResize.call(this);
-		},
+		}
 
 		/**
 		 * Notifies a descendant resizable of the element.
@@ -815,7 +820,7 @@
 
 			this._notifyDescendant(resizable);
 			return instance.__resized = true;
-		},
+		}
 
 		/**
 		 * Select item by id.
@@ -834,7 +839,7 @@
 					return;
 				}
 			}
-		},
+		}
 
 		_forwardItem(element, item, idx) {
 			this._removeInstance(element.__instance);
@@ -847,8 +852,8 @@
 			element.__instance = instance;
 			element.item = item;
 			element._reset = false;
-			Polymer.dom(element).appendChild(instance.root);
-		},
+			element.appendChild(instance.root);
+		}
 
 		_renderQueue() {
 			if (!this.attached) {
@@ -881,7 +886,7 @@
 			}
 
 			_asyncPeriod(this._renderQueue.bind(this));
-		},
+		}
 
 		_renderQueueProcess(idx) {
 			const element = this._getElement(idx),
@@ -903,7 +908,7 @@
 			}
 
 			const isSelected = idx === this.selected,
-				needsRender  = element.item !== item;
+				needsRender = element.item !== item;
 
 			this._renderRan = needsRender;
 
@@ -916,7 +921,7 @@
 				// resize is a expensive operation
 				this._renderRan = this._notifyElementResize();
 			}
-		},
+		}
 
 		_onCachePurge(e, detail) {
 			const ids = detail.ids;
@@ -924,11 +929,11 @@
 				return this.clearCache();
 			}
 			ids.forEach(id => delete this._cache[id]);
-		},
+		}
 
 		_getItemId(item) {
-			return this.isIncompleteFn(item) ? item  : this.get(this.idPath, item);
-		},
+			return this.isIncompleteFn(item) ? item : this.get(this.idPath, item);
+		}
 
 		_updateHashForSelected(selected) {
 			const hashParam = this.hashParam,
@@ -942,7 +947,7 @@
 			if (item == null) {
 				return;
 			}
-			const	itemId = this._getItemId(item),
+			const itemId = this._getItemId(item),
 				path = ['_routeHashParams', hashParam],
 				hashValue = this.get(path);
 
@@ -951,7 +956,7 @@
 			}
 
 			this.set(path, itemId);
-		},
+		}
 
 		_updateSelectedFromHash() {
 			const hashParam = this.hashParam,
@@ -972,6 +977,6 @@
 			this.selected = selection;
 			return true;
 		}
-
-	});
+	}
+	customElements.define(CosmozDataNav.is, CosmozDataNav);
 }());
