@@ -1,33 +1,40 @@
+---
 language: node_js
+node_js: "lts/*"
+
+addons:
+  firefox: latest
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-stable
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
+    - bower_components
+    - .eslintcache
+    - $HOME/.cache/bower
+    - $HOME/cc
+
 env:
   global:
   - CC_TEST_REPORTER_ID=9cf7da023bab612f3146e176b8b0a327a3a309a8af2e7a3e468967a7fe4600b4
   - SAUCE_USERNAME=nomego
   - secure: cQBITrMNen1VJ7rov8APzDC+SdrKmkObpBw3q/tHAYryvw3GhXMLYCFTyLWYCOu0v34OmH3Cu4JEceTFdD74KAXez8CvR140ObVCiS57orVv3V0uUDZB0+2V6qJxHAbWWjuGZsO87RSlZo5eVYW/ELEjPjV5b/OBIrvfx/jOq5+v8KcdYjcnt4LLkZuvyFwPQ8z8LaaUIfjh+LBg7D5C8ISaDs0n1R9dBlZyXyXCExteRCjrGvq2SvfqihNl5Ou7OVT0TMSKIy+AgpIrGHC+R50LLG1vDA+Ryb2qW7gdn/7GX1SUIbDzI0AU1gv+SdJqwY/76aS4PdKzOPtFsbo825p80s4Pq8FREp4ULGLibPc6gUptcQieDo3orJD+C0j/0843GQjfwDq7/KjEBAO1ekMvxdbCaOGOAAZBG+gWj1/TA2ZnCvkjRnoc5MZcb3SQoY+RPea54gkQ3VGC6OvIcn+llMdo3JUI34PAsD0PHD4LgtYLBmkNltjfMEak4bIikkHT6WBErWfn7cC9bwaVppXJa5ih4rEd8tZdu560CYtqUM9ObeAvyskkbUeTmIaDrkzfGXqwcxrG90RFLV22ZMzxIxNFokukA8fWjRhEGa2xXe4hZCgp+NN617Xkv9c6h/De63g2C6tsr9aB33gjTKLHkYYC18VMlRfSk7F/3t4=
-addons:
-  firefox: latest
-  apt:
-    sources:
-    - google-chrome
-    packages:
-    - google-chrome-stable
-cache:
-  yarn: true
-  directories:
-  - node_modules
-  - bower_components
-  - ".eslintcache"
-  - "$HOME/.cache/bower"
+  - NEO_CC_URL=https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+  - NEO_CC=$HOME/cc/cc-test-reporter
+
 before_script:
-- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
-  > ./cc-test-reporter
-- chmod +x ./cc-test-reporter
-- "./cc-test-reporter before-build"
-- yarn run lint
+  - yarn lint
+  - ([[ -e $NEO_CC ]] || curl -L $NEO_CC_URL > $NEO_CC) && chmod +x $NEO_CC
+  - $NEO_CC before-build
 script:
-- yarn test
-after_script:
-- "./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT"
+  - yarn test $([ -z "$SAUCE_ACCESS_KEY"] && echo "--skip-plugin sauce")
+  - $NEO_CC after-build --exit-code $TRAVIS_TEST_RESULT
+
 notifications:
   slack:
     secure: Ijq6DWrCfSGCDv6a5OgzpcNNFNJDtOkBel67AzizrSYEPGExe6YVp9Hp41ln8BGMgO3KNguM11SAWsEy9r8slCE9rcWeYVlIRxQo+0Tvggahz9oCNqh10Mn+0qtg+YKILv4ZnYgLuk0nm3ua2eOV7ypOjXboZ+CYjes4VjwbRbuSO9JT3oui9Kzz/ZXl/TeFwITbMgVQR3Y37O4OxBaXCQGRbkNdI9JfOwl1UmGDqC4i4KLBa2ZKXv4CxH70qxUvEBHpmsCbYOrk2Fj0Njrp5L2Fzs73fy4sKAnfUE9UxRRXTrgfoobBBH+Xw31sU/PZu+R+KPZaWjg9EHEDV6DDyhfAbn5lFbAWoCtgplVsukQP5CxDTugr1fmTxduaxhfaaGyQyAAo7OoexwrlzqCRuLocDRUMNSenxzMuQZe2GAx24MG5HZmCWhz834qrOGONTxUkn8bdI6x/g3xML1BGPzOTdZz/89rF5PDinqoZGJmslpXDc/yH/h//As+9Mbh98+08HFNYoQrdPTL1CqhtYKeUjkijk7CgCUztdLN6RqfbEMfdlxcR7lKQH5r0W5N1nw36qZ+iiL8HlIeG26/wrGX31oi2syo/jV294G6+3YMgqghSXS6hInJ8+GuiQEN4pDvXfK8QqLGxNTTaxdn5GkRvlTuZzuOJZLUhnPtCt+o=
