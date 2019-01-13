@@ -19,15 +19,26 @@
 				_asyncPeriod(callStep, timeout);
 			};
 			return _asyncPeriod(callStep, timeout);
-		};
+		},
+		{
+			Debouncer,
+			enqueueDebouncer,
+			FlattenedNodesObserver,
+			IronResizableBehavior,
+			Templatize,
+			mixinBehaviors
+		} = Polymer;
 
-	class CosmozDataNav extends Polymer.mixinBehaviors([
-		Polymer.IronResizableBehavior,
+
+	class CosmozDataNav extends mixinBehaviors([
+		IronResizableBehavior,
 		Cosmoz.TranslatableBehavior
 	], Polymer.Element) {
+
 		static get is() {
 			return 'cosmoz-data-nav';
 		}
+
 		static get properties() {
 			return {
 				/**
@@ -50,9 +61,9 @@
 				},
 
 				/**
-				* The name of the variable to add to the binding scope with the index
-				* for the item.
-				*/
+				 * The name of the variable to add to the binding scope with the index
+				 * for the item.
+				 */
 				indexAs: {
 					type: String,
 					value: 'index'
@@ -232,28 +243,37 @@
 			super();
 			this._cache = {};
 			this._preloadIdx = 0;
+			this._boundOnTemplatesChange = this._onTemplatesChange.bind(this);
 		}
 
 		connectedCallback() {
-			this._templatesObserver = new Polymer.FlattenedNodesObserver(this.$.templatesSlot, this._onTemplatesChange.bind(this));
+			super.connectedCallback();
+			this._templatesObserver = new FlattenedNodesObserver(
+				this.$.templatesSlot,
+				this._boundOnTemplatesChange
+			);
 			window.addEventListener('cosmoz-cache-purge', this._onCachePurge);
 			this.addEventListener('tap', this._onTap);
 			this.addEventListener('transitionend', this._onTransitionEnd);
 		}
 
 		disconnectedCallback() {
+			super.disconnectedCallback();
 			if (this._templatesObserver) {
 				this._templatesObserver.disconnect();
 				this._templatesObserver = null;
 			}
+
+			if (this._selectDebouncer != null) {
+				this._selectDebouncer.cancel();
+			}
+
 			this._cache = {};
 			this._indexRenderQueue = [];
 			window.removeEventListener('cosmoz-cache-purge', this._onCachePurge);
 			this.removeEventListener('tap', this._onTap);
 			this.removeEventListener('transitionend', this._onTransitionEnd);
-			if (this._selectDebouncer != null) {
-				this._selectDebouncer.cancel();
-			}
+
 			this.splice('_elements', 0, this._elements.length, this._createElement())
 				.forEach(element => {
 					this._removeInstance(element.__instance);
@@ -296,20 +316,15 @@
 				nextDisabled: true,
 				[this.indexAs]: true
 			};
-			this._elementCtor = Cosmoz.Templatize.templatize(this._elementTemplate, this, {
+			this._elementCtor = Templatize.templatize(this._elementTemplate, this, {
 				instanceProps: Object.assign({ [this.as]: true }, baseProps),
 				parentModel: true,
-				forwardParentProp: this._forwardHostProp,
-				forwardParentPath: this._forwardParentPath,
 				forwardHostProp: this._forwardHostProp,
-				forwardInstanceProp: this._notifyInstanceProp,
 				notifyInstanceProp: this._notifyInstanceProp
 			});
-			this._incompleteCtor = Cosmoz.Templatize.templatize(this._incompleteTemplate, this, {
+			this._incompleteCtor = Templatize.templatize(this._incompleteTemplate, this, {
 				instanceProps: baseProps,
 				parentModel: true,
-				forwardParentProp: this._forwardHostProp,
-				forwardParentPath: this._forwardParentPath,
 				forwardHostProp: this._forwardHostProp,
 			});
 		}
@@ -324,14 +339,6 @@
 			return this._elements
 				.map(e => e.__instance)
 				.filter(i => i != null);
-		}
-
-		_forwardParentPath(path, value) {
-			const instances = this._allInstances;
-			if (!instances || !instances.length) {
-				return;
-			}
-			instances.forEach(inst => inst.notifyPath(path, value, true));
 		}
 
 		_forwardHostProp(prop, value) {
@@ -698,13 +705,13 @@
 			if (isNaN(select)) {
 				return;
 			}
-			this._selectDebouncer = Polymer.Debouncer.debounce(this._selectDebouncer,
+			this._selectDebouncer = enqueueDebouncer(Debouncer.debounce(this._selectDebouncer,
 				Polymer.Async.timeOut.after(15),
 				() => {
 					this.animating = true;
 					this.select(this.selected + select);
 				}
-			);
+			));
 		}
 
 		/**

@@ -74,17 +74,13 @@
 
 				setup(done => {
 					nav = fixture('defaults');
+					nav._templatesObserver.flush();
 					nav.items = Array(20).fill('').map((e, i) => i.toString());
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
-					done();
+					flush(done);
 				});
 
 				test('instantiates a cosmoz-data-nav element', () => {
-					assert.equal(nav.is, 'cosmoz-data-nav');
+					assert.equal(nav.constructor.is, 'cosmoz-data-nav');
 				});
 
 				test('creates buffer elements', () => {
@@ -116,14 +112,9 @@
 
 				setup(done => {
 					nav = fixture('defaults');
+					nav._templatesObserver.flush();
 					nav.items = Array(20).fill('').map((e, i) => i.toString());
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
-
-					done();
+					flush(done);
 				});
 
 				test('selected property is updated', () => {
@@ -171,18 +162,12 @@
 
 				setup(done => {
 					nav = fixture('defaults');
-
+					nav._templatesObserver.flush();
 					const items = Array(20).fill('').map((e, i) => i.toString());
 					items[0] = '0';
 					items[1] = '0';
 					nav.items = items;
-
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
-					done();
+					flush(done);
 				});
 
 				test('setItemById handlers duplicate ids', done => {
@@ -205,13 +190,9 @@
 
 				setup(done => {
 					nav = fixture('defaults');
+					nav._templatesObserver.flush();
 					nav.items = Array(20).fill('').map((e, i) => i.toString());
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
-					done();
+					flush(done);
 				});
 				test('cache stores one item', done => {
 					let cache = nav._cache;
@@ -258,7 +239,7 @@
 					done();
 				});
 
-				test('removeFromCache called with null or unknown item', done => {
+				test('removeFromCache called with null or unknown item', () => {
 					let cache = nav._cache,
 						cacheKeys;
 					nav.setItemById('1', { id: 900 });
@@ -271,8 +252,6 @@
 					cacheKeys = Object.keys(cache);
 					nav.removeFromCache({});
 					assert.equal(cacheKeys.length, Object.keys(cache).length);
-
-					done();
 				});
 
 			});
@@ -282,26 +261,21 @@
 
 				setup(done => {
 					nav = fixture('defaults');
-					nav.items = Array(20).fill('').map((e, i) => i.toString());
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
 
-					done();
+					nav._templatesObserver.flush();
+					nav.items = Array(20).fill('').map((e, i) => i.toString());
+					flush(done);
 				});
 
-				test('setItemById warns about a unknown item', done => {
+				test('setItemById warns about a unknown item', () => {
 					const warnSpy = sinon.spy(console, 'warn');
 					const data = { id: 23 };
 					nav.setItemById('23', data);
 					assert.isTrue(warnSpy.calledWithExactly('trying to replace an item that is not in the list', '23', data), true);
 					warnSpy.restore();
-					done();
 				});
 
-				test('isIncompleteFn checks if an item is incomplete', done => {
+				test('isIncompleteFn checks if an item is incomplete', () => {
 					assert.isTrue(nav.isIncompleteFn());
 					assert.isTrue(nav.isIncompleteFn(null));
 					assert.isFalse(nav.isIncompleteFn({ id: '1' }));
@@ -309,7 +283,6 @@
 					nav.setItemById('1', { id: 1 });
 					assert.isTrue(nav.isIncompleteFn(nav.items[0]));
 					assert.isFalse(nav.isIncompleteFn(nav.items[1]));
-					done();
 				});
 
 				test('selectById updates selected property', () => {
@@ -348,18 +321,13 @@
 
 				setup(done => {
 					nav = fixture('elementsBuffer');
+					nav._templatesObserver.flush();
 					nav.items = Array(10).fill('').map((e, i) => i.toString());
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
-
-					done();
+					flush(done);
 				});
 
 				test('instantiates a cosmoz-data-nav element', () => {
-					assert.equal(nav.is, 'cosmoz-data-nav');
+					assert.equal(nav.constructor.is, 'cosmoz-data-nav');
 				});
 
 				test('elementsBuffer property updates _elements', () => {
@@ -367,13 +335,12 @@
 					assert.equal(nav._elements.length, 4);
 				});
 
-				test('_createElement does not create element if length is equal to elementsBuffer', done => {
+				test('_createElement does not create element if length is equal to elementsBuffer', () => {
 					assert.equal(nav.elementsBuffer, 4);
 					assert.equal(nav._elements.length, 4);
 
 					nav._createElement();
 					assert.equal(nav._elements.length, 4);
-					done();
 				});
 
 				test('_createElement returns new element', () => {
@@ -387,18 +354,13 @@
 
 				setup(done => {
 					nav = fixture('renderQueue');
+					nav._templatesObserver.flush();
 					nav.items = Array(10).fill('').map((e, i) => i.toString());
-					if (nav._templatesObserver.flush) {
-						nav._templatesObserver.flush();
-					} else {
-						Polymer.dom.flush();
-					}
-
-					done();
+					flush(done);
 				});
 
 				test('instantiates a cosmoz-data-nav element', () => {
-					assert.equal(nav.is, 'cosmoz-data-nav');
+					assert.equal(nav.constructor.is, 'cosmoz-data-nav');
 				});
 
 				test('renderQueue three items', done => {
