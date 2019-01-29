@@ -244,6 +244,7 @@
 			this._cache = {};
 			this._preloadIdx = 0;
 			this._boundOnTemplatesChange = this._onTemplatesChange.bind(this);
+			this._onCachePurgeHandler = this._onCachePurge.bind(this);
 		}
 
 		connectedCallback() {
@@ -252,7 +253,7 @@
 				this.$.templatesSlot,
 				this._boundOnTemplatesChange
 			);
-			window.addEventListener('cosmoz-cache-purge', this._onCachePurge);
+			window.addEventListener('cosmoz-cache-purge', this._onCachePurgeHandler);
 			this.addEventListener('tap', this._onTap);
 			this.addEventListener('transitionend', this._onTransitionEnd);
 		}
@@ -270,7 +271,7 @@
 
 			this._cache = {};
 			this._indexRenderQueue = [];
-			window.removeEventListener('cosmoz-cache-purge', this._onCachePurge);
+			window.removeEventListener('cosmoz-cache-purge', this._onCachePurgeHandler);
 			this.removeEventListener('tap', this._onTap);
 			this.removeEventListener('transitionend', this._onTransitionEnd);
 
@@ -923,8 +924,8 @@
 			}
 		}
 
-		_onCachePurge(e, detail) {
-			const ids = detail.ids;
+		_onCachePurge(e) {
+			const ids = e.detail.ids;
 			if (!Array.isArray(ids) || ids.length === 0) {
 				return this.clearCache();
 			}
