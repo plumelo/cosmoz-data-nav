@@ -925,11 +925,10 @@
 		}
 
 		_onCachePurge(e) {
-			const ids = e.detail.ids;
-			if (!Array.isArray(ids) || ids.length === 0) {
+			if (e == null || e.detail == null || !Array.isArray(e.detail.ids) || e.detail.ids.length === 0) {
 				return this.clearCache();
 			}
-			ids.forEach(id => delete this._cache[id]);
+			e.detail.ids.forEach(id => delete this._cache[id]);
 		}
 
 		_getItemId(item) {
