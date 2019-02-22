@@ -707,7 +707,7 @@
 				return;
 			}
 			enqueueDebouncer(this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
-				Polymer.Async.timeOut.after(15),
+				Polymer.Async.animationFrame,
 				() => {
 					this.animating = true;
 					this.select(this.selected + select);
