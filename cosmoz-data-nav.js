@@ -706,7 +706,7 @@
 			if (isNaN(select)) {
 				return;
 			}
-			this._selectDebouncer = enqueueDebouncer(Debouncer.debounce(this._selectDebouncer,
+			enqueueDebouncer(this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
 				Polymer.Async.timeOut.after(15),
 				() => {
 					this.animating = true;
