@@ -316,6 +316,34 @@
 				});
 			});
 
+			suite('navigation', () => {
+				let nav;
+
+				setup(done => {
+					nav = fixture('defaults');
+					nav._templatesObserver.flush();
+					nav.items = Array(10).fill('').map((e, i) => i.toString());
+					flush(done);
+				});
+
+				test('selects next item', done => {
+					nav.setItemById('0', { id: 0 });
+					nav.setItemById('1', { id: 1 });
+					nav._renderQueue();
+					nav._renderQueue();
+					const nextBtn = nav._getElement(0)
+						.querySelector('*')
+						.root.
+						querySelector('[cosmoz-data-nav-select="+1"]');
+					nextBtn.click();
+
+					assert.isOk(nav._selectDebouncer);
+					Polymer.flush();
+					assert.isTrue(nav.animating);
+
+				});
+			});
+
 			suite('elements buffer', () => {
 				let nav;
 
