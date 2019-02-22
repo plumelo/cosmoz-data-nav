@@ -326,7 +326,7 @@
 					flush(done);
 				});
 
-				test('selects next item', done => {
+				test('selects next item', () => {
 					nav.setItemById('0', { id: 0 });
 					nav.setItemById('1', { id: 1 });
 					nav._renderQueue();
@@ -340,7 +340,7 @@
 					assert.isOk(nav._selectDebouncer);
 					Polymer.flush();
 					assert.isTrue(nav.animating);
-
+					assert.equal(nav.selected, 1);
 				});
 			});
 
