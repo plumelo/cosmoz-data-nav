@@ -699,13 +699,13 @@
 			if (isNaN(select)) {
 				return;
 			}
-			enqueueDebouncer(this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
+			this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
 				Polymer.Async.timeOut.after(15),
 				() => {
 					this.animating = true;
 					this.select(this.selected + select);
 				}
-			));
+			);
 		}
 
 		/**
