@@ -508,7 +508,7 @@
 			classes.add('selected');
 
 			if (!animating) {
-				if (this.isAttached) {
+				if (this.isConnected) {
 					this._synchronize();
 				}
 				return;
@@ -782,7 +782,7 @@
 		}
 
 		notifyResize() {
-			if (!this.isAttached || this.animating || !this._isVisible) {
+			if (!this.isConnected || this.animating || !this._isVisible) {
 				return;
 			}
 			Polymer.IronResizableBehavior.notifyResize.call(this);
@@ -795,7 +795,7 @@
 		 * @return {Boolean} True if descendant has been notified.
 		 */
 		_notifyElementResize(element = this.selectedElement) {
-			if (!this.isAttached || !element) {
+			if (!this.isConnected || !element) {
 				return false;
 			}
 
