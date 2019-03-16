@@ -20,8 +20,8 @@
 			return _asyncPeriod(callStep, timeout);
 		},
 		{
+			Async,
 			Debouncer,
-			enqueueDebouncer,
 			FlattenedNodesObserver,
 			IronResizableBehavior,
 			Templatize,
@@ -700,7 +700,7 @@
 				return;
 			}
 			this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
-				Polymer.Async.timeOut.after(15),
+				Async.animationFrame,
 				() => {
 					this.animating = true;
 					this.select(this.selected + select);
@@ -785,7 +785,7 @@
 			if (!this.isConnected || this.animating || !this._isVisible) {
 				return;
 			}
-			Polymer.IronResizableBehavior.notifyResize.call(this);
+			IronResizableBehavior.notifyResize.call(this);
 		}
 
 		/**
