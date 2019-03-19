@@ -3,8 +3,7 @@
 
 (function () {
 	'use strict';
-	const IS_V2 = Polymer.flush != null,
-		_async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
+	const _async = window.requestIdleCallback || window.requestAnimationFrame || Polymer.Base.async,
 		_hasDeadline = 'IdleDeadline' in window,
 		_asyncPeriod = (cb, timeout = 1500) => {
 			_async(() => cb(), _hasDeadline && { timeout });
@@ -21,8 +20,8 @@
 			return _asyncPeriod(callStep, timeout);
 		},
 		{
+			Async,
 			Debouncer,
-			enqueueDebouncer,
 			FlattenedNodesObserver,
 			IronResizableBehavior,
 			Templatize,
@@ -347,7 +346,7 @@
 			if (!instances || !instances.length) {
 				return;
 			}
-			instances.forEach(inst => IS_V2 ? inst.forwardHostProp(prop, value) : inst[prop] = value);
+			instances.forEach(inst => inst.forwardHostProp(prop, value));
 		}
 
 		_notifyInstanceProp(inst, prop, value) {
@@ -509,7 +508,7 @@
 			classes.add('selected');
 
 			if (!animating) {
-				if (this.isAttached) {
+				if (this.isConnected) {
 					this._synchronize();
 				}
 				return;
@@ -643,13 +642,7 @@
 			if (!instance) {
 				return;
 			}
-			const children = IS_V2 ? instance.children : instance._children;
-
-			for (let i = 0; i < children.length; i++) {
-				const child = children[i],
-					parent = child.parentNode;
-				parent.removeChild(child);
-			}
+			instance.children.forEach(child => child.parentNode.removeChild(child));
 		}
 
 		/**
@@ -707,13 +700,13 @@
 			if (isNaN(select)) {
 				return;
 			}
-			enqueueDebouncer(this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
-				Polymer.Async.timeOut.after(15),
+			this._selectDebouncer = Debouncer.debounce(this._selectDebouncer,
+				Async.animationFrame,
 				() => {
 					this.animating = true;
 					this.select(this.selected + select);
 				}
-			));
+			);
 		}
 
 		/**
@@ -756,7 +749,7 @@
 				return false;
 			}
 
-			return Array.from(IS_V2 ? instance.children : instance._children)
+			return instance.children
 				.filter(c => c.nodeType === Node.ELEMENT_NODE)
 				.some(child => this._isDescendantOf(descendant, child));
 		}
@@ -790,10 +783,10 @@
 		}
 
 		notifyResize() {
-			if (!this.isAttached || this.animating || !this._isVisible) {
+			if (!this.isConnected || this.animating || !this._isVisible) {
 				return;
 			}
-			Polymer.IronResizableBehavior.notifyResize.call(this);
+			IronResizableBehavior.notifyResize.call(this);
 		}
 
 		/**
@@ -803,7 +796,7 @@
 		 * @return {Boolean} True if descendant has been notified.
 		 */
 		_notifyElementResize(element = this.selectedElement) {
-			if (!this.isAttached || !element) {
+			if (!this.isConnected || !element) {
 				return false;
 			}
 

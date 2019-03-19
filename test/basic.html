@@ -10,8 +10,6 @@
 	<script src="../../web-component-tester/browser.js"></script>
 	<script src="../../test-fixture/test-fixture-mocha.js"></script>
 
-	<script src="./helpers/utils.js"></script>
-
 	<link rel="import" href="../../test-fixture/test-fixture.html">
 	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
 	<link rel="import" href="../cosmoz-data-nav.html">
@@ -63,13 +61,11 @@
 
 	<script>
 		(function () {
-			/*global getDomType*/
 			'use strict';
+
 			sinon.assert.expose(chai.assert, { prefix: '' });
 
-			const domType = getDomType();
-
-			suite(`defaults ${domType}`, () => {
+			suite('defaults', () => {
 				let nav;
 
 				setup(done => {
@@ -326,7 +322,7 @@
 					flush(done);
 				});
 
-				test('selects next item', () => {
+				test('selects next item', done => {
 					nav.setItemById('0', { id: 0 });
 					nav.setItemById('1', { id: 1 });
 					nav._renderQueue();
@@ -338,9 +334,15 @@
 					nextBtn.click();
 
 					assert.isOk(nav._selectDebouncer);
-					Polymer.flush();
+					nav._selectDebouncer.flush();
+
 					assert.isTrue(nav.animating);
 					assert.equal(nav.selected, 1);
+					// wait for animation to end and check animating is false
+					nav.addEventListener('transitionend', () => {
+						assert.isFalse(nav.animating);
+						done();
+					});
 				});
 			});
 
