@@ -156,7 +156,7 @@
 					type: Object,
 					notify: true,
 					readOnly: true,
-					computed: '_getItem(selected, items)'
+					computed: '_getItem(selected, items.*)'
 				},
 
 				/**
@@ -601,7 +601,8 @@
 		}
 
 		_getItem(index, items = this.items) {
-			return items[index];
+			const arr = items.base ? items.base : items;
+			return arr[index];
 		}
 
 		_resetElement(index) {

@@ -52,6 +52,7 @@
 				<dom-bind id="basic">
 					<template is="dom-bind">
 						<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}"
+						selected-item="{{selItem}}"
 						 hash-param="tt">
 							<template>
 								<cosmoz-demo-view class="fit layout vertical" item="{{ item }}" index="[[index]]" data-idx$="{{ computeColorIndex(index) }}"
@@ -59,7 +60,8 @@
 							</template>
 						</cosmoz-data-nav>
 						<paper-textarea value="{{ computeJSON(selected, items.*) }}">
-							<paper-textarea>
+						</paper-textarea>
+							<div>Selected: [[toJSON(selItem)]]</div>
 					</template>
 				</dom-bind>
 			</template>
@@ -91,6 +93,9 @@
 				};
 				basic.computeJSON = function (index) {
 					return JSON.stringify(this.items[index]);
+				};
+				basic.toJSON = function (item) {
+					return JSON.stringify(item);
 				};
 				basic.set('items', items);
 			});
