@@ -322,7 +322,7 @@
 					flush(done);
 				});
 
-				test('selects next item', () => {
+				test('selects next item', done => {
 					nav.setItemById('0', { id: 0 });
 					nav.setItemById('1', { id: 1 });
 					nav._renderQueue();
@@ -338,6 +338,11 @@
 
 					assert.isTrue(nav.animating);
 					assert.equal(nav.selected, 1);
+					// wait for animation to end and check animating is false
+					nav.addEventListener('transitionend', () => {
+						assert.isFalse(nav.animating);
+						done();
+					});
 				});
 			});
 
