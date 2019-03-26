@@ -339,10 +339,12 @@
 					assert.isTrue(nav.animating);
 					assert.equal(nav.selected, 1);
 					// wait for animation to end and check animating is false
-					nav.addEventListener('transitionend', () => {
+					const once = () => {
+						nav.removeEventListener('transitionend', once);
 						assert.isFalse(nav.animating);
 						done();
-					});
+					};
+					nav.addEventListener('transitionend', once);
 				});
 			});
 
