@@ -854,8 +854,8 @@
 			if (Polymer.flush) {
 				Polymer.flush();
 			}
-			const instance = new this._elementCtor({});
-			Object.assign(instance, { [this.as]: item }, this._getBaseProps(idx));
+			const props = Object.assign({ [this.as]: item }, this._getBaseProps(idx));
+			const instance = new this._elementCtor(props);
 
 			element.__instance = instance;
 			element.item = item;
