@@ -39,6 +39,7 @@
 				<template strip-whitespace>
 					<span>id: [[ item.id ]],</span>
 					<span>index: [[ index ]]</span>
+					<span>[[ item.data ]]</span>
 					<input type="button" value="Next" cosmoz-data-nav-select="+1">
 					<input type="button" value="Prev" cosmoz-data-nav-select="-1">
 				</template>
@@ -146,7 +147,78 @@
 				});
 
 				describe('maintainSelection', () => {
-					it('controls whether the selection should be maintained when `items` change');
+					context('when it is false', () => {
+						it('changes to `items` reset `selected` to 0', () => {
+							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1');
+
+							nav.items = [{id: 'c'}, {id: 'd'}, {id: 'e'}];
+							expect(nav.selected).to.equal(0);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: c,index: 0');
+						});
+					});
+
+					context('when it is true', () => {
+						beforeEach(() => {
+							nav.maintainSelection = true;
+						});
+
+						it('on `items` change, updates `selected` to match the last selected item, by reference', () => {
+							const item = {id: 'b', data: 'somedata'};
+							nav.items = [{id: 'a'}, item, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1somedata');
+
+							item.data = 'otherdata';
+							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, item];
+							expect(nav.selected).to.equal(3);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 3otherdata');
+						});
+
+						it('on `items` change, updates `selected` to match the last selected item, by id', () => {
+							nav.items = [{id: 'a'}, {id: 'b', data: 'somedata'}, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1somedata');
+
+							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, {id: 'b', data: 'otherdata'}];
+							expect(nav.selected).to.equal(3);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 3otherdata');
+						});
+
+						it('on `items` change, maintains `selected` to it\'s current value, if the last selected item is no longer present, by reference or by id', () => {
+							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1');
+
+							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}];
+							expect(nav.selected).to.equal(1);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: d,index: 1');
+						});
+
+						context('when idPath is set', () => {
+							it('works as expected', () => {
+								nav.idPath = 'deep.id';
+								nav.items = [{deep: {id: 'a'}}, {deep: {id: 'b'}, data: 'somedata'}, {deep: {id: 'c'}}];
+								nav.selected = 1;
+								flushRenderQueue(nav);
+								expect(nav.querySelector('div.selected').textContent).to.equal('id: ,index: 1somedata');
+
+								nav.items = [{deep: {id: 'a'}}, {deep: {id: 'd'}}, {deep: {id: 'e'}}, {deep: {id: 'b'}, data: 'otherdata'}];
+								expect(nav.selected).to.equal(3);
+								flushRenderQueue(nav);
+								expect(nav.querySelector('div.selected').textContent).to.equal('id: ,index: 3otherdata');
+							});
+						});
+					});
 				});
 
 				describe('preload', () => {
