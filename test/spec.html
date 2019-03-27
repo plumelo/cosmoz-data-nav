@@ -144,6 +144,47 @@
 
 						expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0');
 					});
+
+					it('does not update the view when an item changes', () => {
+						const item = {id: 'a', data: 'somedata'};
+						nav.items = [item];
+						flushRenderQueue(nav);
+						expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0somedata');
+
+						// attempt #1: updating a reference directly does not update the view
+						// this is expected as the data-nav has no way of knowing that data was updated
+						item.data = 'newdata';
+						expect(nav.items[0]).to.have.property('data', 'newdata');
+
+						expect(() => {
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0newdata');
+						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0newdata\'');
+
+
+						// attempt #2: modify item data using polymer manipulation features
+						// this could work, but is not implemented
+						// an observer for items.* should forward the path update down to the rendered template instances
+						nav.set('items.0.data', 'otherdata');
+						expect(nav.items[0]).to.have.property('data', 'otherdata');
+
+						expect(() => {
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0otherdata');
+						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0otherdata\'');
+
+						// attempt #3: try to force render
+						// this does not work, because data-nav checks if it should re-render
+						// the template using a reference check. Because the already rendered
+						// item is the same by reference, the view is not updated.
+						item.data = 'freshdata';
+						expect(nav.items[0]).to.have.property('data', 'freshdata');
+
+						nav._updateSelected();
+						flushRenderQueue(nav);
+
+						expect(() => {
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0freshdata');
+						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0freshdata\'');
+					});
 				});
 
 				describe('maintainSelection', () => {
