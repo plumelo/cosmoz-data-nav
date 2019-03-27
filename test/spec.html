@@ -1,0 +1,338 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>cosmoz-data-nav-basic</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+	<script src="../../web-component-tester/browser.js"></script>
+	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+
+	<script src="./helpers/utils.js"></script>
+
+	<link rel="import" href="../../test-fixture/test-fixture.html">
+	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
+	<link rel="import" href="../cosmoz-data-nav.html">
+	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
+
+	<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
+
+	<custom-style>
+		<style include="iron-flex iron-positioning">
+			cosmoz-data-nav {
+				display: block;
+				width: 455px;
+				height: 400px;
+				position: relative;
+			}
+		</style>
+	</custom-style>
+</head>
+
+<body>
+	<test-fixture id="basic">
+		<template>
+			<cosmoz-data-nav>
+				<template strip-whitespace>
+					<span>id: [[ item.id ]],</span>
+					<span>index: [[ index ]]</span>
+					<span>[[ item.data ]]</span>
+					<input type="button" value="Next" cosmoz-data-nav-select="+1">
+					<input type="button" value="Prev" cosmoz-data-nav-select="-1">
+				</template>
+			</cosmoz-data-nav>
+		</template>
+	</test-fixture>
+
+	<script>
+		const {flushRenderQueue} = window;
+		describe('cosmoz-data-nav', () => {
+			describe('constructor', () => {
+				it('renders', () => {
+					fixture('basic');
+					expect(document.body.querySelector('cosmoz-data-nav')).to.exist;
+				});
+			});
+
+			describe('template', () => {
+				it('renders items using a template', () => {
+					const nav = fixture('basic');
+					nav._templatesObserver.flush();
+
+					nav.items = [{id: 1}, {id: 2}, {id: 3}];
+					flushRenderQueue(nav);
+
+					expect(nav.querySelector('div.selected').textContent).to.equal('id: 1,index: 0');
+				});
+
+				it('renders the wrong item if the templates observer runs after `items` is set [KNOWN BUG]', () => {
+					expect(() => {
+						const nav = fixture('basic');
+						nav.items = [{id: 1}, {id: 2}, {id: 3}];
+
+						nav._templatesObserver.flush();
+						flushRenderQueue(nav);
+
+						expect(nav.querySelector('div.selected').textContent).to.equal('id: 1,index: 0');
+					}).throws('expected \'id: 3,index: 2\' to equal \'id: 1,index: 0\'');
+				});
+
+				it('re-renders when the template changes');
+			});
+
+			context('properties', () => {
+				let nav;
+				beforeEach(() => {
+					nav = fixture('basic');
+					nav._templatesObserver.flush();
+					nav.items = [{id: 1}, {id: 2}, {id: 3}];
+					flushRenderQueue(nav);
+				});
+
+				describe('animating', () => {
+					it('is true if the element is currently animating');
+					it('controls whether the element should animate');
+				});
+
+				describe('as', () => {
+					it('defines the name used in the template for the item');
+				});
+
+				describe('elementsBuffer', () => {
+					it('defines the number of elements that are actually rendered');
+				});
+
+				describe('hashParam', () => {
+					it('defines the hash parameter to use for selecting an item');
+				});
+
+				describe('hasItems', () => {
+					it('is true if the data-nav has items', () => {
+						const nav = fixture('basic');
+
+						expect(nav.hasItems).to.be.false;
+
+						nav.items = [{id: 1}, {id: 2}, {id: 3}];
+
+						expect(nav.hasItems).to.be.true;
+					});
+				});
+
+				describe('hiddenRendering', () => {
+					it('controls whether the element should render items even if it is not visible');
+				});
+
+				describe('idPath', () => {
+					it('defines the path on the item to be used as id');
+				});
+
+				describe('indexAs', () => {
+					it('defines the name used in the template for the index of the item');
+				});
+
+				describe('isIncompleteFn', () => {
+					it('defines the function used to determine if an element is incomplete and nees to be preloaded');
+				});
+
+				describe('items', () => {
+					it('defines the items to render', () => {
+						nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+						flushRenderQueue(nav);
+
+						expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0');
+					});
+
+					it('does not update the view when an item changes', () => {
+						const item = {id: 'a', data: 'somedata'};
+						nav.items = [item];
+						flushRenderQueue(nav);
+						expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0somedata');
+
+						// attempt #1: updating a reference directly does not update the view
+						// this is expected as the data-nav has no way of knowing that data was updated
+						item.data = 'newdata';
+						expect(nav.items[0]).to.have.property('data', 'newdata');
+
+						expect(() => {
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0newdata');
+						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0newdata\'');
+
+
+						// attempt #2: modify item data using polymer manipulation features
+						// this could work, but is not implemented
+						// an observer for items.* should forward the path update down to the rendered template instances
+						nav.set('items.0.data', 'otherdata');
+						expect(nav.items[0]).to.have.property('data', 'otherdata');
+
+						expect(() => {
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0otherdata');
+						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0otherdata\'');
+
+						// attempt #3: try to force render
+						// this does not work, because data-nav checks if it should re-render
+						// the template using a reference check. Because the already rendered
+						// item is the same by reference, the view is not updated.
+						item.data = 'freshdata';
+						expect(nav.items[0]).to.have.property('data', 'freshdata');
+
+						nav._updateSelected();
+						flushRenderQueue(nav);
+
+						expect(() => {
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0freshdata');
+						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0freshdata\'');
+					});
+				});
+
+				describe('maintainSelection', () => {
+					context('when it is false', () => {
+						it('changes to `items` reset `selected` to 0', () => {
+							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1');
+
+							nav.items = [{id: 'c'}, {id: 'd'}, {id: 'e'}];
+							expect(nav.selected).to.equal(0);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: c,index: 0');
+						});
+					});
+
+					context('when it is true', () => {
+						beforeEach(() => {
+							nav.maintainSelection = true;
+						});
+
+						it('on `items` change, updates `selected` to match the last selected item, by reference', () => {
+							const item = {id: 'b', data: 'somedata'};
+							nav.items = [{id: 'a'}, item, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1somedata');
+
+							item.data = 'otherdata';
+							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, item];
+							expect(nav.selected).to.equal(3);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 3otherdata');
+						});
+
+						it('on `items` change, updates `selected` to match the last selected item, by id', () => {
+							nav.items = [{id: 'a'}, {id: 'b', data: 'somedata'}, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1somedata');
+
+							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, {id: 'b', data: 'otherdata'}];
+							expect(nav.selected).to.equal(3);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 3otherdata');
+						});
+
+						it('on `items` change, maintains `selected` to it\'s current value, if the last selected item is no longer present, by reference or by id', () => {
+							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+							nav.selected = 1;
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1');
+
+							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}];
+							expect(nav.selected).to.equal(1);
+							flushRenderQueue(nav);
+							expect(nav.querySelector('div.selected').textContent).to.equal('id: d,index: 1');
+						});
+
+						context('when idPath is set', () => {
+							it('works as expected', () => {
+								nav.idPath = 'deep.id';
+								nav.items = [{deep: {id: 'a'}}, {deep: {id: 'b'}, data: 'somedata'}, {deep: {id: 'c'}}];
+								nav.selected = 1;
+								flushRenderQueue(nav);
+								expect(nav.querySelector('div.selected').textContent).to.equal('id: ,index: 1somedata');
+
+								nav.items = [{deep: {id: 'a'}}, {deep: {id: 'd'}}, {deep: {id: 'e'}}, {deep: {id: 'b'}, data: 'otherdata'}];
+								expect(nav.selected).to.equal(3);
+								flushRenderQueue(nav);
+								expect(nav.querySelector('div.selected').textContent).to.equal('id: ,index: 3otherdata');
+							});
+						});
+					});
+				});
+
+				describe('preload', () => {
+					it('defines the number of items after the currently selected one to preload');
+				});
+
+				describe('queueLength', () => {
+					it('exposes the length of the items array');
+				});
+
+				describe('reverse', () => {
+					it('is true if the index of the currently selected item is smaller than the previous one');
+				});
+
+				describe('selectAttribute', () => {
+					it('defines the name of the attribute that is used to control the direction of the navigation');
+				});
+
+				describe('selected', () => {
+					it('exposes the currently selected index', () => {
+						expect(nav.selected).to.equal(0);
+					});
+
+					it('controls the currently selected index', () => {
+						nav.selected = 1;
+
+						expect(nav.selected).to.equal(1);
+						expect(nav.querySelector('div.selected').textContent).to.equal('id: 2,index: 1');
+					});
+				});
+
+				describe('selectedElement', () => {
+					it('exposes the DOM element of the selected item', () => {
+						expect(nav.selectedElement).to.exist;
+						expect(nav.selectedElement).to.be.instanceOf(HTMLElement);
+						expect(nav.selectedElement).to.have.property('item', nav.items[0]);
+					});
+				});
+
+				describe('selectedInstance', () => {
+					it('exposes the instance of the selected item');
+					it('does not work properly [KNOWN BUG]', () => {
+						expect(() => {
+							expect(nav.selectedInstance).to.exist;
+						}).throws('expected undefined to exist');
+					});
+				});
+
+				describe('selectedItem', () => {
+					it('exposes the selected item');
+				});
+
+				describe('selectedNext', () => {
+					it('exposes the index of the selected item');
+				});
+			});
+
+			context('methods', () => {
+				describe('select', () => {
+					it('selects an items by index');
+				});
+
+				describe('selectById', () => {
+					it('selects item by id');
+				});
+
+				describe('setItemById', () => {
+					it('replaces an id in `items` with the full item');
+				});
+			});
+		});
+
+	</script>
+</body>
+
+</html>
