@@ -240,6 +240,7 @@
 
 		constructor() {
 			super();
+			this._previouslySelectedItem = null;
 			this._cache = {};
 			this._preloadIdx = 0;
 			this._boundOnTemplatesChange = this._onTemplatesChange.bind(this);
@@ -268,6 +269,7 @@
 				this._selectDebouncer.cancel();
 			}
 
+			this._previouslySelectedItem = null;
 			this._cache = {};
 			this._indexRenderQueue = [];
 			window.removeEventListener('cosmoz-cache-purge', this._onCachePurgeHandler);
@@ -445,10 +447,11 @@
 		_itemsChanged(items) {
 			const length = items && items.length;
 
-			//Update readOnly queueLength
+			// update read-only properties
 			this._setQueueLength(length >> 0);
 			this._setHasItems(!!length);
 
+			// replace incomplete items with cached item data
 			if (length) {
 				items.forEach((item, index) => {
 					if (this.isIncompleteFn(item) && this._cache[item]) {
@@ -457,22 +460,31 @@
 				});
 			}
 
+			// synchronize `selected` with hash params
 			if (this._updateSelectedFromHash()) {
 				return;
 			}
 
+			// reset queue to 0 or maintain selection
 			let index = 0;
-			if (this.maintainSelection && this.selected > 0) {
-				const selectedId = this._getItemId(this.selectedItem);
-				index = Math.max(0, items.findIndex(item => this._getItemId(item) === selectedId));
+			if (this.maintainSelection && this._previouslySelectedItem != null) {
+				// search for previously selected item by reference
+				index = items.indexOf(this._previouslySelectedItem);
+
+				// if not found, search by id
+				if (index === -1) {
+					const prevId = this._getItemId(this._previouslySelectedItem);
+					index = items.findIndex(item => this._getItemId(item) === prevId);
+				}
+
+				// if still not found, remain on the selected index, but force re-render
+				if (index === -1) {
+					return this._updateSelected();
+				}
 			}
 
-			if (this.selected === index) {
-				return this._updateSelected();
-			}
-
-			this.selected = index;
-
+			// update selected or force re-render if selected did not change
+			return this.selected === index ? this._updateSelected() : this.selected = index;
 		}
 
 		/**
@@ -487,6 +499,7 @@
 			const position = selected < this.items.length ? selected : selected - 1;
 			this._setSelectedNext((position || 0) + 1);
 			this._preload(position);
+			this._previouslySelectedItem = this.items[position];
 
 			const element = this._getElement(position);
 
