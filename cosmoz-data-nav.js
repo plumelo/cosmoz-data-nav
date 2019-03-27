@@ -17,7 +17,8 @@
 				step();
 				_asyncPeriod(callStep, timeout);
 			};
-			return _asyncPeriod(callStep, timeout);
+			_asyncPeriod(callStep, timeout);
+			return () => steps.forEach(step => step());
 		},
 		{
 			Async,
@@ -303,7 +304,7 @@
 			this.splice('_elements', -1, 0, ...Array(this.elementsBuffer - length)
 				.fill().map(this._createElement, this));
 
-			_doAsyncSteps(elements.map(el => {
+			this.flushTemplatesInit = _doAsyncSteps(elements.map(el => {
 				this.appendChild(el);
 				return this._createIncomplete.bind(this, el);
 			}));
