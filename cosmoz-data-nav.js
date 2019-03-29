@@ -595,7 +595,7 @@
 			return {
 				prevDisabled: index < 1,
 				nextDisabled: index + 1 >= this.items.length,
-				[this.indexAs]: Math.min(Math.max(index, 0), this.items.length - 1)
+				[this.indexAs]: Math.max(Math.min(index, this.items.length - 1), 0)
 			};
 		}
 
