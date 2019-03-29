@@ -51,7 +51,7 @@
 
 	<script>
 		const {flushRenderQueue} = window;
-		const selectedSlide = (nav) => nav.querySelector('div.selected .slide')
+		const selectedSlide = nav => nav.querySelector('div.selected .slide');
 
 		describe('cosmoz-data-nav', () => {
 			describe('constructor', () => {
@@ -89,12 +89,12 @@
 
 			context('properties', () => {
 				let nav;
-				beforeEach((done) => {
+				beforeEach(done => {
 					nav = fixture('basic');
 					nav._templatesObserver.flush();
 					nav.items = [{id: 1}, {id: 2}, {id: 3}];
 					flushRenderQueue(nav);
-					setTimeout(done, 50)
+					setTimeout(done, 50);
 				});
 
 				describe('animating', () => {
@@ -248,6 +248,23 @@
 							expect(nav.selected).to.equal(1);
 							flushRenderQueue(nav);
 							expect(selectedSlide(nav).textContent).to.equal('id: d,index: 1');
+						});
+
+						it('resets selected to 0 when `items` is empty', () => {
+							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+							nav.selected = 2;
+							flushRenderQueue(nav);
+							expect(selectedSlide(nav).textContent).to.equal('id: c,index: 2');
+
+							nav.items = [];
+							expect(nav.selected).to.equal(0);
+							flushRenderQueue(nav);
+							expect(selectedSlide(nav).textContent).to.equal('id: c,index: 2');
+
+							nav.items = [{id: 'd'}, {id: 'e'}, {id: 'f'}];
+							expect(nav.selected).to.equal(0);
+							flushRenderQueue(nav);
+							expect(selectedSlide(nav).textContent).to.equal('id: d,index: 0');
 						});
 
 						context('when idPath is set', () => {

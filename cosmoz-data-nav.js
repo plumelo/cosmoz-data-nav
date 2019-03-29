@@ -467,7 +467,7 @@
 
 			// reset queue to 0 or maintain selection
 			let index = 0;
-			if (this.maintainSelection && this._previouslySelectedItem != null) {
+			if (this.items.length > 0 && this.maintainSelection && this._previouslySelectedItem != null) {
 				// search for previously selected item by reference
 				index = items.indexOf(this._previouslySelectedItem);
 
