@@ -37,11 +37,13 @@
 		<template>
 			<cosmoz-data-nav>
 				<template strip-whitespace>
-					<span>id: [[ item.id ]],</span>
-					<span>index: [[ index ]]</span>
-					<span>[[ item.data ]]</span>
-					<input type="button" value="Next" cosmoz-data-nav-select="+1">
-					<input type="button" value="Prev" cosmoz-data-nav-select="-1">
+					<div class="slide">
+						<span>id: [[ item.id ]],</span>
+						<span>index: [[ index ]]</span>
+						<span>[[ item.data ]]</span>
+						<input type="button" value="Next" cosmoz-data-nav-select="+1">
+						<input type="button" value="Prev" cosmoz-data-nav-select="-1">
+					</div>
 				</template>
 			</cosmoz-data-nav>
 		</template>
@@ -49,6 +51,8 @@
 
 	<script>
 		const {flushRenderQueue} = window;
+		const selectedSlide = nav => nav.querySelector('div.selected .slide');
+
 		describe('cosmoz-data-nav', () => {
 			describe('constructor', () => {
 				it('renders', () => {
@@ -85,11 +89,12 @@
 
 			context('properties', () => {
 				let nav;
-				beforeEach(() => {
+				beforeEach(done => {
 					nav = fixture('basic');
 					nav._templatesObserver.flush();
 					nav.items = [{id: 1}, {id: 2}, {id: 3}];
 					flushRenderQueue(nav);
+					setTimeout(done, 50);
 				});
 
 				describe('animating', () => {
@@ -142,14 +147,14 @@
 						nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
 						flushRenderQueue(nav);
 
-						expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0');
+						expect(selectedSlide(nav).textContent).to.equal('id: a,index: 0');
 					});
 
 					it('does not update the view when an item changes', () => {
 						const item = {id: 'a', data: 'somedata'};
 						nav.items = [item];
 						flushRenderQueue(nav);
-						expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0somedata');
+						expect(selectedSlide(nav).textContent).to.equal('id: a,index: 0somedata');
 
 						// attempt #1: updating a reference directly does not update the view
 						// this is expected as the data-nav has no way of knowing that data was updated
@@ -157,7 +162,7 @@
 						expect(nav.items[0]).to.have.property('data', 'newdata');
 
 						expect(() => {
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0newdata');
+							expect(selectedSlide(nav).textContent).to.equal('id: a,index: 0newdata');
 						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0newdata\'');
 
 
@@ -168,7 +173,7 @@
 						expect(nav.items[0]).to.have.property('data', 'otherdata');
 
 						expect(() => {
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0otherdata');
+							expect(selectedSlide(nav).textContent).to.equal('id: a,index: 0otherdata');
 						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0otherdata\'');
 
 						// attempt #3: try to force render
@@ -182,7 +187,7 @@
 						flushRenderQueue(nav);
 
 						expect(() => {
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: a,index: 0freshdata');
+							expect(selectedSlide(nav).textContent).to.equal('id: a,index: 0freshdata');
 						}).throws('expected \'id: a,index: 0somedata\' to equal \'id: a,index: 0freshdata\'');
 					});
 				});
@@ -193,12 +198,12 @@
 							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
 							nav.selected = 1;
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1');
 
 							nav.items = [{id: 'c'}, {id: 'd'}, {id: 'e'}];
 							expect(nav.selected).to.equal(0);
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: c,index: 0');
+							expect(selectedSlide(nav).textContent).to.equal('id: c,index: 0');
 						});
 					});
 
@@ -212,37 +217,54 @@
 							nav.items = [{id: 'a'}, item, {id: 'c'}];
 							nav.selected = 1;
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1somedata');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1somedata');
 
 							item.data = 'otherdata';
 							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, item];
 							expect(nav.selected).to.equal(3);
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 3otherdata');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 3otherdata');
 						});
 
 						it('on `items` change, updates `selected` to match the last selected item, by id', () => {
 							nav.items = [{id: 'a'}, {id: 'b', data: 'somedata'}, {id: 'c'}];
 							nav.selected = 1;
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1somedata');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1somedata');
 
 							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, {id: 'b', data: 'otherdata'}];
 							expect(nav.selected).to.equal(3);
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 3otherdata');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 3otherdata');
 						});
 
 						it('on `items` change, maintains `selected` to it\'s current value, if the last selected item is no longer present, by reference or by id', () => {
 							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
 							nav.selected = 1;
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: b,index: 1');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1');
 
 							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}];
 							expect(nav.selected).to.equal(1);
 							flushRenderQueue(nav);
-							expect(nav.querySelector('div.selected').textContent).to.equal('id: d,index: 1');
+							expect(selectedSlide(nav).textContent).to.equal('id: d,index: 1');
+						});
+
+						it('resets selected to 0 when `items` is empty', () => {
+							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+							nav.selected = 2;
+							flushRenderQueue(nav);
+							expect(selectedSlide(nav).textContent).to.equal('id: c,index: 2');
+
+							nav.items = [];
+							expect(nav.selected).to.equal(0);
+							flushRenderQueue(nav);
+							expect(selectedSlide(nav).textContent).to.equal('id: c,index: 2');
+
+							nav.items = [{id: 'd'}, {id: 'e'}, {id: 'f'}];
+							expect(nav.selected).to.equal(0);
+							flushRenderQueue(nav);
+							expect(selectedSlide(nav).textContent).to.equal('id: d,index: 0');
 						});
 
 						context('when idPath is set', () => {
@@ -251,12 +273,12 @@
 								nav.items = [{deep: {id: 'a'}}, {deep: {id: 'b'}, data: 'somedata'}, {deep: {id: 'c'}}];
 								nav.selected = 1;
 								flushRenderQueue(nav);
-								expect(nav.querySelector('div.selected').textContent).to.equal('id: ,index: 1somedata');
+								expect(selectedSlide(nav).textContent).to.equal('id: ,index: 1somedata');
 
 								nav.items = [{deep: {id: 'a'}}, {deep: {id: 'd'}}, {deep: {id: 'e'}}, {deep: {id: 'b'}, data: 'otherdata'}];
 								expect(nav.selected).to.equal(3);
 								flushRenderQueue(nav);
-								expect(nav.querySelector('div.selected').textContent).to.equal('id: ,index: 3otherdata');
+								expect(selectedSlide(nav).textContent).to.equal('id: ,index: 3otherdata');
 							});
 						});
 					});
@@ -287,7 +309,7 @@
 						nav.selected = 1;
 
 						expect(nav.selected).to.equal(1);
-						expect(nav.querySelector('div.selected').textContent).to.equal('id: 2,index: 1');
+						expect(selectedSlide(nav).textContent).to.equal('id: 2,index: 1');
 					});
 				});
 

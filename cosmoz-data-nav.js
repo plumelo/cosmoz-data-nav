@@ -467,7 +467,7 @@
 
 			// reset queue to 0 or maintain selection
 			let index = 0;
-			if (this.maintainSelection && this._previouslySelectedItem != null) {
+			if (items.length > 0 && this.maintainSelection && this._previouslySelectedItem != null) {
 				// search for previously selected item by reference
 				index = items.indexOf(this._previouslySelectedItem);
 
@@ -595,7 +595,7 @@
 			return {
 				prevDisabled: index < 1,
 				nextDisabled: index + 1 >= this.items.length,
-				[this.indexAs]: Math.min(Math.max(index, 0), this.items.length - 1)
+				[this.indexAs]: Math.max(Math.min(index, this.items.length - 1), 0)
 			};
 		}
 
