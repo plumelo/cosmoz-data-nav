@@ -219,11 +219,10 @@
 							flushRenderQueue(nav);
 							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1somedata');
 
-							item.data = 'otherdata';
 							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}, item];
 							expect(nav.selected).to.equal(3);
 							flushRenderQueue(nav);
-							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 3otherdata');
+							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 3somedata');
 						});
 
 						it('on `items` change, updates `selected` to match the last selected item, by id', () => {
