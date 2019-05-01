@@ -477,14 +477,34 @@
 					index = items.findIndex(item => this._getItemId(item) === prevId);
 				}
 
-				// if still not found, remain on the selected index, but force re-render
+				// if still not found, remain on the selected index
 				if (index === -1) {
-					return this._updateSelected();
+					index = this.selected;
 				}
+				this._realignElements(index);
 			}
-
 			// update selected or force re-render if selected did not change
 			return this.selected === index ? this._updateSelected() : this.selected = index;
+		}
+
+		_realignElements(index) {
+			const elements = this._elements,
+				element = this._getElement(index),
+				item = this.items[index];
+			if (element.item === item) {
+				return;
+			}
+			const renderedElement = this._elements.find(el => el.item === item || this._getItemId(el.item) === this._getItemId(item));
+			if (!renderedElement) {
+				return;
+			}
+			const elementIndex = elements.indexOf(element);
+			const renderedIndex = elements.indexOf(renderedElement);
+			if (elementIndex === renderedIndex) {
+				return;
+			}
+			this.splice('_elements', renderedIndex, 1);
+			this.splice('_elements', elementIndex, 0, renderedElement);
 		}
 
 		/**
@@ -510,12 +530,13 @@
 			this._updateHashForSelected(position);
 
 			const classes = element.classList,
-				animating = this.animating && previous != null && previous !== position,
-				prev = animating && this._getElement(previous);
+				animating = this.animating && previous != null && previous !== position;
 
 			if (!animating) {
 				this._elements.forEach(el => el.classList.remove('selected'));
 			}
+
+			const prev = animating && this._getElement(previous);
 
 			classes.toggle('in', !!this.animating);
 			classes.add('selected');
@@ -600,8 +621,11 @@
 		}
 
 		_getElement(index, _elements = this._elements) {
-			const elements = _elements && _elements.base || _elements;
-			return elements[index % (this.elementsBuffer || elements.length)];
+			const elements = _elements && _elements.base || _elements,
+				bufferLength = this.elementsBuffer || elements.length,
+				elementIndex = index % bufferLength;
+
+			return elements[elementIndex];
 		}
 
 		_getInstance(selectedElement) {
