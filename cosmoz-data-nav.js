@@ -491,10 +491,10 @@
 			const elements = this._elements,
 				element = this._getElement(index),
 				item = this.items[index];
-			if (element.item === item) {
+			if (this.isIncompleteFn(item) || element.item === item) {
 				return;
 			}
-			const renderedElement = this._elements.find(el => el.item === item || this._getItemId(el.item) === this._getItemId(item));
+			const renderedElement = this._elements.find(el => !this.isIncompleteFn(el.item) && this._getItemId(el.item) === this._getItemId(item));
 			if (!renderedElement) {
 				return;
 			}
@@ -503,6 +503,7 @@
 			if (elementIndex === renderedIndex) {
 				return;
 			}
+			renderedElement.item = item;
 			this.splice('_elements', renderedIndex, 1);
 			this.splice('_elements', elementIndex, 0, renderedElement);
 		}
