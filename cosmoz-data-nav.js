@@ -524,6 +524,9 @@
 		 * @return {void}
 		 */
 		_updateSelected(selected = this.selected, previous) {
+			if (this.items.length === 0) {
+				return;
+			}
 			const position = selected < this.items.length ? selected : selected - 1;
 			this._setSelectedNext((position || 0) + 1);
 			this._preload(position);
@@ -544,8 +547,6 @@
 				this._elements.forEach(el => el.classList.remove('selected'));
 			}
 
-			const prev = animating && this._getElement(previous);
-
 			classes.toggle('in', !!this.animating);
 			classes.add('selected');
 
@@ -555,6 +556,8 @@
 				}
 				return;
 			}
+
+			const prev = animating && this._getElement(previous);
 
 			requestAnimationFrame(() => {
 				if (prev && element.offsetWidth) {
