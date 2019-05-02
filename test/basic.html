@@ -191,14 +191,14 @@
 					flush(done);
 				});
 				test('cache stores one item', done => {
-					let cache = nav._cache;
+					const cache = nav._cache;
 					nav.setItemById('1', { id: 88 });
 					assert.equal(cache['1'].id, 88);
 					done();
 				});
 
 				test('cache stores two items', done => {
-					let cache = nav._cache;
+					const cache = nav._cache;
 					nav.setItemById('1', { id: 88 });
 					nav.setItemById('2', { id: 99 });
 					assert.equal(cache['1'].id, 88);
@@ -207,7 +207,7 @@
 				});
 
 				test('clearCache method works', done => {
-					let cache = nav._cache;
+					const cache = nav._cache;
 					nav.setItemById('1', { id: 1 });
 					nav.setItemById('2', { id: 2 });
 					assert.equal(cache['1'].id, 1);
@@ -218,7 +218,7 @@
 				});
 
 				test('removeFromCache method works', done => {
-					let cache = nav._cache;
+					const cache = nav._cache;
 					nav.setItemById('1', { id: 88 });
 					nav.setItemById('2', { id: 99 });
 					nav.setItemById('3', { id: 11 });
@@ -236,8 +236,8 @@
 				});
 
 				test('removeFromCache called with null or unknown item', () => {
-					let cache = nav._cache,
-						cacheKeys;
+					const cache = nav._cache;
+					let cacheKeys;
 					nav.setItemById('1', { id: 900 });
 					assert.equal(cache['1'].id, 900);
 

@@ -1,4 +1,5 @@
 (() => {
+	'use strict';
 	const flushRenderQueue = nav => {
 		while (nav._indexRenderQueue.length) {
 			nav._renderQueue();

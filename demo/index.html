@@ -69,6 +69,7 @@
 	</div>
 	<script type="text/javascript">
 		(function () {
+			'use strict';
 			window.addEventListener('WebComponentsReady', () => {
 				let basic = document.getElementById('basic');
 				const items = Array(20).fill('').map((e, i) => i.toString()),
@@ -76,9 +77,7 @@
 
 				basic = !basic.set ? basic.firstElementChild : basic;
 
-				basic.computeColorIndex = function (index) {
-					return index % 3;
-				};
+				basic.computeColorIndex = index => index % 3;
 				basic.onNeedData = function (event, detail) {
 					const id = detail.id;
 					if (asyncs[id]) {
@@ -94,9 +93,7 @@
 				basic.computeJSON = function (index) {
 					return JSON.stringify(this.items[index]);
 				};
-				basic.toJSON = function (item) {
-					return JSON.stringify(item);
-				};
+				basic.toJSON = item => JSON.stringify(item);
 				basic.set('items', items);
 			});
 

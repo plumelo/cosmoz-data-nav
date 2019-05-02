@@ -38,7 +38,7 @@
 			return 'cosmoz-data-nav';
 		}
 
-		static get properties() {
+		static get properties() { // eslint-disable-line max-lines-per-function
 			return {
 				/**
 				 * The array of buffer elements.
@@ -182,7 +182,7 @@
 				animating: {
 					type: Boolean,
 					value: false,
-					reflectToAttribute: true,
+					reflectToAttribute: true
 				},
 
 				/**
@@ -191,7 +191,7 @@
 				reverse: {
 					type: Boolean,
 					value: false,
-					reflectToAttribute: true,
+					reflectToAttribute: true
 				},
 
 				/**
@@ -327,7 +327,7 @@
 			this._incompleteCtor = Templatize.templatize(this._incompleteTemplate, this, {
 				instanceProps: baseProps,
 				parentModel: true,
-				forwardHostProp: this._forwardHostProp,
+				forwardHostProp: this._forwardHostProp
 			});
 		}
 
@@ -484,7 +484,11 @@
 				this._realignElements(index);
 			}
 			// update selected or force re-render if selected did not change
-			return this.selected === index ? this._updateSelected() : this.selected = index;
+			if (this.selected === index) {
+				return this._updateSelected();
+			}
+			this.selected = index;
+			return index;
 		}
 
 		_realignElements(index) {
@@ -708,7 +712,10 @@
 
 			const start = min(max(selected - offset, 0), length ? length - buffer : 0),
 				end = max(min(selected + offset, length ? length - 1 : 0), buffer - 1),
-				indexes = Array(end + 1).fill().map((u, i) => i).slice(start >= 0 ? start : 0);
+				indexes = Array(end + 1)
+					.fill()
+					.map((u, i) => i)
+					.slice(start >= 0 ? start : 0);
 
 			// Reset items
 			indexes.forEach(i => this._resetElement(i));
@@ -735,15 +742,14 @@
 			if (!selectEl) {
 				return;
 			}
-			let inBetween = path.slice(path.indexOf(selectEl)),
-				ancestorNav = inBetween.find(e => e && e.constructor && e.constructor.is === this.constructor.is),
-				select;
+			const inBetween = path.slice(path.indexOf(selectEl)),
+				ancestorNav = inBetween.find(e => e && e.constructor && e.constructor.is === this.constructor.is);
 
 			if (ancestorNav !== this) {
 				return;
 			}
 
-			select = parseInt(selectEl.getAttribute(attr), 10);
+			const select = parseInt(selectEl.getAttribute(attr), 10);
 
 			if (isNaN(select)) {
 				return;
@@ -854,15 +860,17 @@
 				return false;
 			}
 
-			const resizable = this._interestedResizables
-				.find(resizable => this._isDescendantOfElementInstance(resizable, element));
+			const resizable = this._interestedResizables.find(resizable =>
+				this._isDescendantOfElementInstance(resizable, element)
+			);
 
-			if (!resizable) {
+			if (resizable == null) {
 				return false;
 			}
 
 			this._notifyDescendant(resizable);
-			return instance.__resized = true;
+			instance.__resized = true;
+			return true;
 		}
 
 		/**
@@ -873,10 +881,8 @@
 		 * @return {void}
 		 */
 		selectById(id) {
-			var index,
-				item;
-			for (index = 0; index < this.items.length; index++) {
-				item = this.items[index];
+			for (let index = 0; index < this.items.length; index++) {
+				const item = this.items[index];
 				if (typeof item === 'object' && item.id === id || item === id) {
 					this.selected = index;
 					return;
@@ -889,8 +895,8 @@
 			if (Polymer.flush) {
 				Polymer.flush();
 			}
-			const props = Object.assign({ [this.as]: item }, this._getBaseProps(idx));
-			const instance = new this._elementCtor(props);
+			const props = Object.assign({ [this.as]: item }, this._getBaseProps(idx)),
+				instance = new this._elementCtor(props);
 
 			element.__instance = instance;
 			element.item = item;
@@ -919,7 +925,15 @@
 				this._renderRan = this._renderAbort = false;
 
 				this._indexRenderQueue = queue
-					.sort((a, b) => a === this.selected ? -1 : b === this.selected ? 1 : 0)
+					.sort((a, b) => {
+						if (a === this.selected) {
+							return -1;
+						}
+						if (b === this.selected) {
+							return 1;
+						}
+						return 0;
+					})
 					.map(this._renderQueueProcess, this)
 					.filter(idx => idx != null);
 
