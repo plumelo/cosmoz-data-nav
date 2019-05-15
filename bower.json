@@ -6,7 +6,7 @@
 	"dependencies": {
 		"polymer": "Polymer/polymer#^2.6.1",
 		"cosmoz-bottom-bar": "Neovici/cosmoz-bottom-bar#^2.0.0",
-		"cosmoz-i18next": "Neovici/cosmoz-i18next#^2.0.0",
+		"cosmoz-i18next": "Neovici/cosmoz-i18next#^2.0.1",
 		"cosmoz-page-router": "Neovici/cosmoz-page-router#^2.0.0",
 		"iron-flex-layout": "PolymerElements/iron-flex-layout#^2.0.3",
 		"paper-icon-button": "PolymerElements/paper-icon-button#^2.2.0",

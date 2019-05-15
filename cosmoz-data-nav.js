@@ -29,10 +29,9 @@
 		} = Polymer;
 
 
-	class CosmozDataNav extends mixinBehaviors([
-		IronResizableBehavior,
-		Cosmoz.TranslatableBehavior
-	], Polymer.Element) {
+	class CosmozDataNav extends Cosmoz.Mixins.translatable(mixinBehaviors([
+		IronResizableBehavior
+	], Polymer.Element)) {
 
 		static get is() {
 			return 'cosmoz-data-nav';
