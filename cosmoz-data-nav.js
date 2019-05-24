@@ -471,14 +471,16 @@
 				index = items.indexOf(this._previouslySelectedItem);
 
 				// if not found, search by id
-				if (index === -1) {
+				if (index < 0) {
 					const prevId = this._getItemId(this._previouslySelectedItem);
 					index = items.findIndex(item => this._getItemId(item) === prevId);
 				}
 
 				// if still not found, remain on the selected index
-				if (index === -1) {
-					index = this.selected;
+				if (index < 0) {
+					index = this.selected < items.length
+						? this.selected
+						: items.length - 1;
 				}
 				this._realignElements(index);
 			}
