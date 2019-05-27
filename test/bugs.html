@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>cosmoz-data-nav-basic</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+	<script src="../../web-component-tester/browser.js"></script>
+	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+
+	<script src="./helpers/utils.js"></script>
+
+	<link rel="import" href="../../test-fixture/test-fixture.html">
+	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
+	<link rel="import" href="../cosmoz-data-nav.html">
+	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
+
+	<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
+
+	<custom-style>
+		<style include="iron-flex iron-positioning">
+			cosmoz-data-nav {
+				display: block;
+				width: 455px;
+				height: 400px;
+				position: relative;
+			}
+		</style>
+	</custom-style>
+</head>
+
+<body>
+	<test-fixture id="basic">
+		<template>
+			<cosmoz-data-nav>
+				<template strip-whitespace>
+					<div class="slide">
+						<span>id: [[ item.id ]],</span>
+						<span>index: [[ index ]]</span>
+						<span>[[ item.data ]]</span>
+						<input type="button" value="Next" cosmoz-data-nav-select="+1">
+						<input type="button" value="Prev" cosmoz-data-nav-select="-1">
+					</div>
+				</template>
+			</cosmoz-data-nav>
+		</template>
+	</test-fixture>
+
+	<test-fixture id="hidden">
+		<template>
+			<cosmoz-data-nav style="display: none">
+				<template strip-whitespace>
+					<div class="slide">
+						<span>id: [[ item.id ]],</span>
+						<span>index: [[ index ]]</span>
+						<span>[[ item.data ]]</span>
+						<input type="button" value="Next" cosmoz-data-nav-select="+1">
+						<input type="button" value="Prev" cosmoz-data-nav-select="-1">
+					</div>
+				</template>
+			</cosmoz-data-nav>
+		</template>
+	</test-fixture>
+
+	<script>
+		/* eslint-disable max-lines-per-function, max-statements, max-nested-callbacks, strict */
+		const selectedSlide = nav => {
+				'use strict';
+				return nav.querySelector('div.selected .slide');
+			},
+			isVisible = el => Boolean(el.offsetHeight || el.offsetWidth),
+			slowFactor = 1 / 3,
+			wait = time => new Promise(resolve => setTimeout(resolve, time * slowFactor));
+
+
+		suite('bugs', () => {
+			test('https://github.com/Neovici/cosmoz-data-nav/issues/84', async () => {
+				const items = [
+					{id: 0},
+					{id: 1},
+					{id: 2},
+					{id: 3},
+					{id: 4}
+				];
+
+				// initialize cosmoz-data-nav as hidden,
+				// simulating the list-queue-core behavior
+				const nav = fixture('hidden');
+				nav._templatesObserver.flush();
+
+				// the bug manifests when data is set as incomplete,
+				// so we must set up the need-data handler
+				const asyncs = {};
+				nav.addEventListener('need-data', event => {
+					const id = event.detail.id;
+					if (!id) {
+						return;
+					}
+					if (asyncs[id]) {
+						Polymer.Base.cancelAsync(asyncs[id]);
+						asyncs[id] = null;
+					}
+					asyncs[id] = Polymer.Base.async(() => {
+						event.target.setItemById(id, items[id]);
+					}, 50 * slowFactor);
+				});
+
+				// the list page loads and sets all items as queued
+				nav.items = [0, 1, 2, 3, 4];
+				await wait(100);
+
+				// select an incomplete item
+				nav.items = [2];
+				// the need-data exchange will take place and make it "complete"
+				await wait(100);
+
+				// select the now-complete item and another incomplete item,
+				nav.items = [items[2], 3];
+				await wait(100);
+
+				// switch to the queue tab, making it visible and turning 'maintain selection' on
+				nav.maintainSelection = true;
+				nav.style.display = 'block';
+				await wait(100);
+
+				// the view should be rendered correctly
+				expect(isVisible(selectedSlide(nav))).to.be.true;
+				expect(selectedSlide(nav).textContent).to.equal('id: 2,index: 0');
+
+				// process the first item
+				// thus removing it from the queue
+				nav.items = [items[2], items[3]];
+				nav.items = [items[3]];
+				await wait(100);
+
+				// the view should be rendered correctly
+				expect(isVisible(selectedSlide(nav))).to.be.true;
+				expect(selectedSlide(nav).textContent).to.equal('id: 3,index: 0');
+			});
+		});
+
+	</script>
+</body>
+
+</html>

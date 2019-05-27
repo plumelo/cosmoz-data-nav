@@ -242,17 +242,31 @@
 							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 3otherdata');
 						});
 
-						it('on `items` change, maintains `selected` to it\'s current value, ' +
-								'if the last selected item is no longer present, by reference or by id', () => {
-							nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
-							nav.selected = 1;
-							flushRenderQueue(nav);
-							expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1');
+						context('when the last selected item is no longer present, by reference or by id', () => {
+							it('maintains `selected` to it\'s current value', () => {
+								nav.items = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+								nav.selected = 1;
+								flushRenderQueue(nav);
+								expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1');
 
-							nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}];
-							expect(nav.selected).to.equal(1);
-							flushRenderQueue(nav);
-							expect(selectedSlide(nav).textContent).to.equal('id: d,index: 1');
+								nav.items = [{id: 'a'}, {id: 'd'}, {id: 'e'}];
+								expect(nav.selected).to.equal(1);
+								flushRenderQueue(nav);
+								expect(selectedSlide(nav).textContent).to.equal('id: d,index: 1');
+							});
+
+							it('updates `selected` if there are not enough items', () => {
+								nav.items = [{id: 'a'}, {id: 'e'}];
+								nav.selected = 1;
+								flushRenderQueue(nav);
+								expect(selectedSlide(nav).textContent).to.equal('id: e,index: 1');
+
+								nav.items = [{id: 'a'}];
+								expect(nav.selected).to.equal(0);
+								flushRenderQueue(nav);
+								expect(selectedSlide(nav).textContent).to.equal('id: a,index: 0');
+							});
+
 						});
 
 						it('resets selected to 0 when `items` is empty', () => {
