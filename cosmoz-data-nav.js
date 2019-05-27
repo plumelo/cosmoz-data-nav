@@ -976,6 +976,8 @@
 					return idx;
 				}
 			} else if (isSelected) {
+				// make sure that the instance is visible (may be a re-aligned invisible instance)
+				element.__instance._showHideChildren(false);
 				// resize is a expensive operation
 				this._renderRan = this._notifyElementResize();
 			}
