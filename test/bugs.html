@@ -67,14 +67,7 @@
 
 	<script>
 		/* eslint-disable max-lines-per-function, max-statements, max-nested-callbacks, strict */
-		const selectedSlide = nav => {
-				'use strict';
-				return nav.querySelector('div.selected .slide');
-			},
-			isVisible = el => Boolean(el.offsetHeight || el.offsetWidth),
-			slowFactor = 1 / 3,
-			wait = time => new Promise(resolve => setTimeout(resolve, time * slowFactor));
-
+		const { flushRenderQueue, selectedSlide, isVisible, wait } = window.testUtils;
 
 		suite('bugs', () => {
 			test('https://github.com/Neovici/cosmoz-data-nav/issues/84', async () => {
@@ -105,26 +98,26 @@
 					}
 					asyncs[id] = Polymer.Base.async(() => {
 						event.target.setItemById(id, items[id]);
-					}, 50 * slowFactor);
+					}, 0);
 				});
 
 				// the list page loads and sets all items as queued
 				nav.items = [0, 1, 2, 3, 4];
-				await wait(100);
+				await wait(30);
 
 				// select an incomplete item
 				nav.items = [2];
 				// the need-data exchange will take place and make it "complete"
-				await wait(100);
+				await wait(30);
 
 				// select the now-complete item and another incomplete item,
 				nav.items = [items[2], 3];
-				await wait(100);
+				await wait(30);
 
 				// switch to the queue tab, making it visible and turning 'maintain selection' on
 				nav.maintainSelection = true;
 				nav.style.display = 'block';
-				await wait(100);
+				flushRenderQueue(nav);
 
 				// the view should be rendered correctly
 				expect(isVisible(selectedSlide(nav))).to.be.true;
@@ -134,7 +127,7 @@
 				// thus removing it from the queue
 				nav.items = [items[2], items[3]];
 				nav.items = [items[3]];
-				await wait(100);
+				flushRenderQueue(nav);
 
 				// the view should be rendered correctly
 				expect(isVisible(selectedSlide(nav))).to.be.true;

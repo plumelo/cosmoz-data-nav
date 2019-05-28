@@ -51,11 +51,7 @@
 
 	<script>
 		/* eslint-disable max-lines-per-function, max-statements, max-nested-callbacks */
-		const { flushRenderQueue } = window,
-			selectedSlide = nav => {
-				'use strict';
-				return nav.querySelector('div.selected .slide');
-			};
+		const { flushRenderQueue, selectedSlide } = window.testUtils;
 
 		describe('cosmoz-data-nav', () => {
 			'use strict';
