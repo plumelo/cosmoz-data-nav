@@ -2,38 +2,62 @@
 	"name": "cosmoz-data-nav",
 	"version": "0.0.1",
 	"description": "[![Build Status](https://travis-ci.org/Neovici/cosmoz-data-nav.svg?branch=master)](https://travis-ci.org/Neovici/cosmoz-data-nav)",
-	"main": "cosmoz-data-nav.html",
-	"directories": {
-		"test": "test"
-	},
-	"devDependencies": {
-		"eslint": "^5.14.0",
-		"eslint-plugin-html": "^5.0.3",
-		"eslint-plugin-mocha": "^5.3.0",
-		"polymer-cli": "^1.9.6",
-		"web-component-tester-istanbul": "Neovici/web-component-tester-istanbul"
-	},
-	"scripts": {
-		"start": "polymer serve -o",
-		"preinstall": "rm -f package.lock",
-		"postinstall": "polymer install && yarn sync-npm",
-		"lint": "eslint --cache --cache-location .eslintcache/ --ext .js,.html . && polymer lint cosmoz-*.html",
-		"test": "polymer test",
-		"analyze": "polymer analyze --input cosmoz-*.html  > analysis.json",
-		"sync-npm": "npm shrinkwrap && mv npm-shrinkwrap.json package-lock.json"
+	"keywords": [
+		"polymer",
+		"web-components"
+	],
+	"homepage": "https://github.com/neovici/cosmoz-data-nav#readme",
+	"bugs": {
+		"url": "https://github.com/neovici/cosmoz-data-nav/issues"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/neovici/cosmoz-data-nav.git"
 	},
-	"keywords": [
-		"polymer",
-		"web-components"
-	],
-	"author": "",
 	"license": "Apache-2.0",
-	"bugs": {
-		"url": "https://github.com/neovici/cosmoz-data-nav/issues"
+	"author": "",
+	"main": "cosmoz-data-nav.js",
+	"directories": {
+		"test": "test"
 	},
-	"homepage": "https://github.com/neovici/cosmoz-data-nav#readme"
+	"scripts": {
+		"analyze": "polymer analyze --input cosmoz-*.js  > analysis.json",
+		"lint": "eslint --cache --ext .js,.html . && polymer lint cosmoz-*.js",
+		"start": "polymer serve -o",
+		"test": "polymer test"
+	},
+	"dependencies": {
+		"@neovici/cosmoz-bottom-bar": "plumelo/cosmoz-bottom-bar#feature/NEOV-368-polymer3",
+		"@neovici/cosmoz-i18next": "plumelo/cosmoz-i18next#feature/NEOV-366-upgrade-polymer-3",
+		"@neovici/cosmoz-page-router": "plumelo/cosmoz-page-router#feature/NEOV-361-3.x",
+		"@polymer/iron-flex-layout": "^3.0.0",
+		"@polymer/paper-icon-button": "^3.0.0",
+		"@polymer/paper-spinner": "^3.0.0",
+		"@polymer/polymer": "^3.0.0"
+	},
+	"devDependencies": {
+		"@neovici/eslint-config": "neovici/eslint-config#semver:~1.0.0",
+		"@polymer/iron-component-page": "^4.0.0",
+		"@polymer/iron-demo-helpers": "^3.0.0",
+		"@polymer/iron-test-helpers": "^3.0.0",
+		"@polymer/paper-input": "^3.0.0",
+		"@polymer/test-fixture": "^4.0.2",
+		"@webcomponents/webcomponentsjs": "^2.0.0",
+		"chai": "^4.2.0",
+		"eslint": "^5.0.0",
+		"eslint-plugin-html": "^5.0.0",
+		"eslint-plugin-mocha": "^5.0.0",
+		"mocha": "^5.0.0",
+		"polymer-cli": "^1.9.6",
+		"sinon": "^7.3.2",
+		"wct-istanbul": "^0.14.3",
+		"wct-mocha": "^1.0.1",
+		"web-animations-js": "^2.3.1"
+	},
+	"resolutions": {
+		"inherits": "2.0.3",
+		"samsam": "1.1.3",
+		"supports-color": "3.1.2",
+		"type-detect": "1.0.0"
+	}
 }

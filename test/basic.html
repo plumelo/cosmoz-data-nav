@@ -6,17 +6,22 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-	<script src="../../web-component-tester/browser.js"></script>
-	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+	<script src="/components/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+	<script src="/components/mocha/mocha.js"></script>
+	<script src="/components/wct-mocha/wct-mocha.js"></script>
+	<script src="/components/chai/chai.js"></script>
+	<script src="/components/sinon/pkg/sinon.js"></script>
+	<script src="/components/@polymer/test-fixture/test-fixture-mocha.js"></script>
 
-	<link rel="import" href="../../test-fixture/test-fixture.html">
-	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
-	<link rel="import" href="../cosmoz-data-nav.html">
-	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
+	<script type="module" src="/components/@polymer/test-fixture/test-fixture.js"></script>
+	<script type="module" src="/components/@polymer/iron-test-helpers/iron-test-helpers.js"></script>
 
-	<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
-	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
+	<script type="module" src="/components/@polymer/polymer/lib/elements/custom-style.js"></script>
+	<script type="module" src="/components/@polymer/iron-flex-layout/iron-flex-layout.js"></script>
+	<script type="module" src="/components/@polymer/iron-flex-layout/iron-flex-layout-classes.js"></script>
+
+	<script type="module" src="../cosmoz-data-nav.js"></script>
+	<script type="module" src="./helpers/cosmoz-data-nav-test-view.js"></script>
 
 	<custom-style>
 		<style include="iron-flex iron-positioning">
@@ -42,7 +47,7 @@
 	</test-fixture>
 	<test-fixture id="elementsBuffer">
 		<template>
-			<cosmoz-data-nav elements-buffer=4>
+			<cosmoz-data-nav elements-buffer="4">
 				<template>
 					<cosmoz-data-nav-test-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-test-view>
 				</template>
@@ -51,7 +56,7 @@
 	</test-fixture>
 	<test-fixture id="renderQueue">
 		<template>
-			<cosmoz-data-nav elements-buffer=5>
+			<cosmoz-data-nav elements-buffer="5">
 				<template>
 					<cosmoz-data-nav-test-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-test-view>
 				</template>
@@ -59,9 +64,8 @@
 		</template>
 	</test-fixture>
 
-	<script>
-		(function () {
-			'use strict';
+	<script type="module">
+			import { Base } from '/components/@polymer/polymer/polymer-legacy.js';
 
 			sinon.assert.expose(chai.assert, { prefix: '' });
 
@@ -303,7 +307,7 @@
 					assert.equal(nav._preloadIdx, 0);
 
 					nav.setItemById('0', data);
-					Polymer.Base.async(() => {
+					Base.async(() => {
 						assert.equal(nav._preloadIdx, 1);
 						assert.isFalse(nav.isIncompleteFn(nav.items[0]));
 						assert.deepEqual(nav.items[0], data);
@@ -400,7 +404,7 @@
 					nav.setItemById('0', { id: 0 });
 					nav.setItemById('1', { id: 1 });
 					nav.setItemById('2', { id: 2 });
-					Polymer.Base.async(() => {
+					Base.async(() => {
 						const elements = nav._elements;
 						assert.deepEqual(elements[0].__instance.item, { id: 0 });
 						assert.deepEqual(elements[1].__instance.item, { id: 1 });
@@ -415,7 +419,7 @@
 					ids.forEach(id => {
 						nav.setItemById(id.toString(), { id });
 					});
-					Polymer.Base.async(() => {
+					Base.async(() => {
 						const elements = nav._elements;
 						assert.equal(elements.length, 5);
 						elements.forEach((el, id) => {
@@ -425,8 +429,7 @@
 					}, 1500);
 				});
 			});
-		}());
-	</script>
+		</script>
 </body>
 
 </html>
