@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import '@webcomponents/shadycss/entrypoints/apply-shim';
 
 import '@polymer/iron-flex-layout/iron-flex-layout';
@@ -75,7 +76,7 @@ Example:
 @appliesMixin translatable
 */
 class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior], PolymerElement)) {
-	static get template() {
+	static get template() { // eslint-disable-line max-lines-per-function
 		return html`
 		<style include="iron-flex iron-positioning">
 			:host {
@@ -545,11 +546,11 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 	 * @param	 {type} items description
 	 * @return {type}				description
 	 */
-	_itemsChanged(items) {
+	_itemsChanged(items) { // eslint-disable-line max-statements
 		const length = items && items.length;
 
 		// update read-only properties
-		this._setQueueLength(length >> 0);
+		this._setQueueLength(length >> 0); // eslint-disable-line no-bitwise
 		this._setHasItems(!!length);
 
 		// replace incomplete items with cached item data
@@ -594,7 +595,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 		return index;
 	}
 
-	_realignElements(index) {
+	_realignElements(index) { // eslint-disable-line max-statements
 		const elements = this._elements,
 			element = this._getElement(index),
 			item = this.items[index];
@@ -630,7 +631,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 	 * @param	 {Number} previous The previous value of selected property
 	 * @return {void}
 	 */
-	_updateSelected(selected = this.selected, previous) {
+	_updateSelected(selected = this.selected, previous) { // eslint-disable-line max-statements
 		if (this.items.length === 0) {
 			return;
 		}
@@ -759,7 +760,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 		return arr[index];
 	}
 
-	_resetElement(index) {
+	_resetElement(index) { // eslint-disable-line max-statements
 		const element = this._getElement(index);
 		if (!element || !element.__incomplete) {
 			return;
@@ -808,7 +809,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 	_synchronize() {
 		const selected = this.selected,
 			buffer = this.elementsBuffer,
-			offset = buffer / 2 >> 0,
+			offset = buffer / 2 >> 0, // eslint-disable-line no-bitwise
 			max = Math.max,
 			min = Math.min,
 			length = this.items.length;
@@ -1047,7 +1048,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 		_asyncPeriod(this._renderQueue.bind(this));
 	}
 
-	_renderQueueProcess(idx) {
+	_renderQueueProcess(idx) { // eslint-disable-line max-statements
 		const element = this._getElement(idx),
 			item = this.items[idx];
 
