@@ -20,20 +20,15 @@
 			"dir": "./coverage",
 			"reporters": ["text-summary", "lcov"],
 			"include": [
-				"cosmoz-data-nav.html",
-				"cosmoz-data-nav.js"
+				"**/cosmoz-*.js"
 			],
 			"exclude": []
 		},
 		"sauce": {
 			"browsers": [{
-				"browserName": "microsoftedge",
-				"platform": "Windows 10",
-				"version": ""
-			}, {
 				"browserName": "chrome",
 				"platform": "Windows 10",
-				"version": "dev"
+				"version": "latest"
 			}, {
 				"browserName": "chrome",
 				"platform": "Windows 10",

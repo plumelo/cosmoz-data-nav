@@ -6,19 +6,22 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-	<script src="../../web-component-tester/browser.js"></script>
-	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+	<script src="/components/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+	<script src="/components/mocha/mocha.js"></script>
+	<script src="/components/wct-mocha/wct-mocha.js"></script>
+	<script src="/components/chai/chai.js"></script>
+	<script src="/components/sinon/pkg/sinon.js"></script>
+	<script src="/components/@polymer/test-fixture/test-fixture-mocha.js"></script>
 
-	<script src="./helpers/utils.js"></script>
+	<script type="module" src="/components/@polymer/test-fixture/test-fixture.js"></script>
+	<script type="module" src="/components/@polymer/iron-test-helpers/iron-test-helpers.js"></script>
 
-	<link rel="import" href="../../test-fixture/test-fixture.html">
-	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
-	<link rel="import" href="../cosmoz-data-nav.html">
-	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
+	<script type="module" src="/components/@polymer/polymer/lib/elements/custom-style.js"></script>
+	<script type="module" src="/components/@polymer/iron-flex-layout/iron-flex-layout.js"></script>
+	<script type="module" src="/components/@polymer/iron-flex-layout/iron-flex-layout-classes.js"></script>
 
-	<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
-	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
+	<script type="module" src="../cosmoz-data-nav.js"></script>
+	<script type="module" src="./helpers/cosmoz-data-nav-test-view.js"></script>
 
 	<custom-style>
 		<style include="iron-flex iron-positioning">
@@ -36,7 +39,7 @@
 	<test-fixture id="basic">
 		<template>
 			<cosmoz-data-nav>
-				<template strip-whitespace>
+				<template strip-whitespace="">
 					<div class="slide">
 						<span>id: [[ item.id ]],</span>
 						<span>index: [[ index ]]</span>
@@ -49,12 +52,11 @@
 		</template>
 	</test-fixture>
 
-	<script>
+	<script type="module">
 		/* eslint-disable max-lines-per-function, max-statements, max-nested-callbacks */
-		const { flushRenderQueue, selectedSlide } = window.testUtils;
+		import { flushRenderQueue, selectedSlide } from './helpers/utils';
 
 		describe('cosmoz-data-nav', () => {
-			'use strict';
 			describe('constructor', () => {
 				it('renders', () => {
 					fixture('basic');
@@ -368,7 +370,6 @@
 				});
 			});
 		});
-
 	</script>
 </body>
 

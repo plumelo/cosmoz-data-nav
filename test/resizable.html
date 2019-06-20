@@ -6,20 +6,22 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-	<script src="../../web-component-tester/browser.js"></script>
-	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+	<script src="/components/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
+	<script src="/components/mocha/mocha.js"></script>
+	<script src="/components/wct-mocha/wct-mocha.js"></script>
+	<script src="/components/chai/chai.js"></script>
+	<script src="/components/sinon/pkg/sinon.js"></script>
+	<script src="/components/@polymer/test-fixture/test-fixture-mocha.js"></script>
 
-	<link rel="import" href="../../polymer/lib/elements/custom-style.html">
+	<script type="module" src="/components/@polymer/test-fixture/test-fixture.js"></script>
+	<script type="module" src="/components/@polymer/iron-test-helpers/iron-test-helpers.js"></script>
 
-	<link rel="import" href="../../test-fixture/test-fixture.html">
-	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
-	<link rel="import" href="../cosmoz-data-nav.html">
-	<link rel="import" href="./helpers/cosmoz-data-nav-test-view.html">
-	<link rel="import" href="./helpers/cosmoz-data-nav-resizable-view.html">
+	<script type="module" src="/components/@polymer/polymer/lib/elements/custom-style.js"></script>
+	<script type="module" src="/components/@polymer/iron-flex-layout/iron-flex-layout.js"></script>
+	<script type="module" src="/components/@polymer/iron-flex-layout/iron-flex-layout-classes.js"></script>
 
-	<link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
-	<link rel="import" href="../../iron-flex-layout/iron-flex-layout-classes.html">
+	<script type="module" src="../cosmoz-data-nav.js"></script>
+	<script type="module" src="./helpers/cosmoz-data-nav-resizable-view.js"></script>
 
 	<custom-style>
 		<style include="iron-flex iron-positioning">
@@ -38,64 +40,60 @@
 		<template>
 			<cosmoz-data-nav>
 				<template>
-					<!-- <cosmoz-data-nav-test-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-test-view> -->
 					<cosmoz-data-nav-resizable-view class="fit layout vertical" item="{{ item }}" index="[[ index ]]"></cosmoz-data-nav-resizable-view>
 				</template>
 			</cosmoz-data-nav>
 		</template>
 	</test-fixture>
 
-	<script>
-		(function () {
-			'use strict';
+	<script type="module">
+		import { flush } from '@polymer/polymer/lib/utils/flush';
 
-			sinon.assert.expose(chai.assert, { prefix: '' });
+		sinon.assert.expose(chai.assert, { prefix: '' });
 
-			const whenFirstElementsRenderer = (nav, done) => {
-				let listener;
-				nav.addEventListener('iron-request-resize-notifications', listener = () => {
-					const rendered = nav._elements.filter(e => e.__instance != null && e.__incomplete != null);
-					if (rendered.length === nav.elementsBuffer) {
-						nav.removeEventListener('iron-request-resize-notifications', listener);
-						done();
-					}
-				});
-			};
-
-			suite('resizable', () => {
-				let nav;
-
-				setup(done => {
-					nav = fixture('resizable');
-					nav._templatesObserver.flush();
-					nav.items = Array(10).fill('').map((e, i) => i.toString());
-					flush(done);
-				});
-
-				test('instantiates a cosmoz-data-nav element', () => {
-					assert.equal(nav.constructor.is, 'cosmoz-data-nav');
-				});
-
-				test('resize', done => {
-					whenFirstElementsRenderer(nav, () => {
-						const spy = sinon.spy(),
-							view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view');
-						nav.addEventListener('iron-resize', spy);
-						nav.notifyResize();
-						Polymer.flush();
-						assert.calledOnce(spy);
-						assert.equal(nav._interestedResizables.length, 6);
-						assert.isTrue(nav.resizerShouldNotify(view));
-						done();
-					});
-
-					nav.setItemById('0', { id: 0 });
-					nav.setItemById('1', { id: 1 });
-					nav.setItemById('2', { id: 2 });
-
-				});
+		const whenFirstElementsRenderer = (nav, done) => {
+			let listener;
+			nav.addEventListener('iron-request-resize-notifications', listener = () => {
+				const rendered = nav._elements.filter(e => e.__instance != null && e.__incomplete != null);
+				if (rendered.length === nav.elementsBuffer) {
+					nav.removeEventListener('iron-request-resize-notifications', listener);
+					done();
+				}
 			});
-		}());
+		};
+
+		suite('resizable', () => {
+			let nav;
+
+			setup(() => {
+				nav = fixture('resizable');
+				nav._templatesObserver.flush();
+				nav.items = Array(10).fill('').map((e, i) => i.toString());
+				flush();
+			});
+
+			test('instantiates a cosmoz-data-nav element', () => {
+				assert.equal(nav.constructor.is, 'cosmoz-data-nav');
+			});
+
+			test('resize', done => {
+				whenFirstElementsRenderer(nav, () => {
+					const spy = sinon.spy(),
+						view = nav._elements[0].querySelector('cosmoz-data-nav-resizable-view');
+					nav.addEventListener('iron-resize', spy);
+					nav.notifyResize();
+					assert.calledOnce(spy);
+					assert.equal(nav._interestedResizables.length, 6);
+					assert.isTrue(nav.resizerShouldNotify(view));
+					done();
+				});
+
+				nav.setItemById('0', { id: 0 });
+				nav.setItemById('1', { id: 1 });
+				nav.setItemById('2', { id: 2 });
+
+			});
+		});
 	</script>
 </body>
 

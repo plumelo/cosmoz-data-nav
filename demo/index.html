@@ -7,23 +7,27 @@
 
 	<title>cosmoz-data-nav demo</title>
 
-	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+	<script src="/components/@webcomponents/webcomponentsjs/webcomponents-bundle.js"></script>
 
-	<link rel="import" href="../../polymer/lib/elements/custom-style.html">
+	<script type="module" src="/components/@polymer/polymer/lib/elements/custom-style.js"></script>
 
-	<link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html" />
-	<link rel="import" href="../../iron-demo-helpers/demo-snippet.html" />
+	<script type="module" src="/components/@polymer/iron-demo-helpers/demo-pages-shared-styles.js"></script>
+	<script type="module" src="/components/@polymer/iron-demo-helpers/demo-snippet.js"></script>
 
-	<link rel="import" href="../../paper-icon-button/paper-icon-button.html" />
-	<link rel="import" href="../../paper-spinner/paper-spinner-lite.html">
-	<link rel="import" href="../../paper-input/paper-textarea.html">
-	<link rel="import" href="../../iron-icons/iron-icons.html" />
-	<link rel="import" href="./helpers/cosmoz-demo-view.html" />
-	<link rel="import" href="../cosmoz-data-nav.html" />
+	<script type="module" src="/components/@polymer/paper-icon-button/paper-icon-button.js"></script>
+	<script type="module" src="/components/@polymer/paper-spinner/paper-spinner-lite.js"></script>
+	<script type="module" src="/components/@polymer/paper-input/paper-textarea.js"></script>
+	<script type="module" src="/components/@polymer/iron-icons/iron-icons.js"></script>
 
-	<custom-style>
-		<style include="demo-pages-shared-styles iron-flex iron-positioning">
-			#container {
+	<script type="module" src="./helpers/cosmoz-demo-view.js"></script>
+	<script type="module" src="../cosmoz-data-nav.js"></script>
+
+	<script type="module">
+		const container = document.createElement('template');
+
+		container.innerHTML = `<custom-style>
+			<style include="demo-pages-shared-styles iron-flex iron-positioning">
+				#container {
 					max-width: 800px;
 				}
 				cosmoz-data-nav {
@@ -41,7 +45,10 @@
 					background-color: orange;
 				}
 			</style>
-	</custom-style>
+		</custom-style>`;
+
+		document.body.appendChild(container.content);
+	</script>
 </head>
 
 <body unresolved>
@@ -50,13 +57,10 @@
 		<demo-snippet>
 			<template>
 				<dom-bind id="basic">
-					<template is="dom-bind">
-						<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}"
-						selected-item="{{selItem}}"
-						 hash-param="tt">
+					<template>
+						<cosmoz-data-nav items="[[ items ]]" index-as="index" as="item" on-need-data="onNeedData" selected="{{ selected }}" selected-item="{{selItem}}" hash-param="tt">
 							<template>
-								<cosmoz-demo-view class="fit layout vertical" item="{{ item }}" index="[[index]]" data-idx$="{{ computeColorIndex(index) }}"
-								 prev-disabled="[[ prevDisabled ]]" next-disabled="[[ nextDisabled ]]"></cosmoz-demo-view>
+								<cosmoz-demo-view class="fit layout vertical" item="{{ item }}" index="[[index]]" data-idx$="{{ computeColorIndex(index) }}" prev-disabled="[[ prevDisabled ]]" next-disabled="[[ nextDisabled ]]"></cosmoz-demo-view>
 							</template>
 						</cosmoz-data-nav>
 						<paper-textarea value="{{ computeJSON(selected, items.*) }}">
@@ -67,38 +71,36 @@
 			</template>
 		</demo-snippet>
 	</div>
-	<script type="text/javascript">
-		(function () {
-			'use strict';
-			window.addEventListener('WebComponentsReady', () => {
-				let basic = document.getElementById('basic');
-				const items = Array(20).fill('').map((e, i) => i.toString()),
-					asyncs = {};
 
-				basic = !basic.set ? basic.firstElementChild : basic;
+	<script type="module">
+		import { Base } from '@polymer/polymer/polymer-legacy';
 
-				basic.computeColorIndex = index => index % 3;
-				basic.onNeedData = function (event, detail) {
-					const id = detail.id;
-					if (asyncs[id]) {
-						Polymer.Base.cancelAsync(asyncs[id]);
-						asyncs[id] = null;
-					}
-					console.log('on need data');
-					asyncs[id] = Polymer.Base.async(() => {
-						event.target.setItemById(detail.id, { id: detail.id });
-					}, 5000);
-					return { id: detail.id };
-				};
-				basic.computeJSON = function (index) {
-					return JSON.stringify(this.items[index]);
-				};
-				basic.toJSON = item => JSON.stringify(item);
-				basic.set('items', items);
-			});
+		window.addEventListener('WebComponentsReady', () => {
+			let basic = document.getElementById('basic');
+			const items = Array(20).fill('').map((e, i) => i.toString()),
+				asyncs = {};
 
-			///
-		})();
+			basic = !basic.set ? basic.firstElementChild : basic;
+
+			basic.computeColorIndex = index => index % 3;
+			basic.onNeedData = function (event, detail) {
+				const id = detail.id;
+				if (asyncs[id]) {
+					Base.cancelAsync(asyncs[id]);
+					asyncs[id] = null;
+				}
+				console.log('on need data');
+				asyncs[id] = Base.async(() => {
+					event.target.setItemById(detail.id, { id: detail.id });
+				}, 500);
+				return { id: detail.id };
+			};
+			basic.computeJSON = function (index) {
+				return JSON.stringify(this.items[index]);
+			};
+			basic.toJSON = item => JSON.stringify(item);
+			basic.set('items', items);
+		});
 	</script>
 </body>
 
