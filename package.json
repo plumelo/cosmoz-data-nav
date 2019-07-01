@@ -1,6 +1,6 @@
 {
-	"name": "cosmoz-data-nav",
-	"version": "0.0.1",
+	"name": "@neovici/cosmoz-data-nav",
+	"version": "3.0.0",
 	"description": "[![Build Status](https://travis-ci.org/Neovici/cosmoz-data-nav.svg?branch=master)](https://travis-ci.org/Neovici/cosmoz-data-nav)",
 	"keywords": [
 		"polymer",
@@ -23,13 +23,15 @@
 	"scripts": {
 		"analyze": "polymer analyze --input cosmoz-*.js  > analysis.json",
 		"lint": "eslint --cache --ext .js,.html . && polymer lint cosmoz-*.js",
+		"preversion": "npm run lint && npm run test -- --skip-plugin sauce",
+		"postversion": "git push && git push --tags",
 		"start": "polymer serve -o",
 		"test": "polymer test"
 	},
 	"dependencies": {
-		"@neovici/cosmoz-bottom-bar": "neovici/cosmoz-bottom-bar#semver:^3.0.0",
-		"@neovici/cosmoz-i18next": "neovici/cosmoz-i18next#semver:^3.0.0",
-		"@neovici/cosmoz-page-router": "neovici/cosmoz-page-router#semver:^3.0.0",
+		"@neovici/cosmoz-bottom-bar": "github:neovici/cosmoz-bottom-bar#semver:^3.0.2",
+		"@neovici/cosmoz-i18next": "github:neovici/cosmoz-i18next#semver:^3.0.1",
+		"@neovici/cosmoz-page-router": "github:neovici/cosmoz-page-router#semver:^3.0.3",
 		"@polymer/iron-flex-layout": "^3.0.0",
 		"@polymer/iron-resizable-behavior": "^3.0.1",
 		"@polymer/paper-icon-button": "^3.0.0",
@@ -38,7 +40,7 @@
 		"@webcomponents/shadycss": "^1.9.1"
 	},
 	"devDependencies": {
-		"@neovici/eslint-config": "neovici/eslint-config#semver:^1.0.0",
+		"@neovici/eslint-config": "github:neovici/eslint-config#semver:^1.0.0",
 		"@polymer/iron-component-page": "^4.0.0",
 		"@polymer/iron-demo-helpers": "^3.0.0",
 		"@polymer/iron-test-helpers": "^3.0.0",
