@@ -17,9 +17,9 @@ class CosmozDemoView extends PolymerElement {
 		</style>
 		<div class="flex text">{{ item.id }}</div>
 		<div>
-			<paper-icon-button slot="actions" disabled\$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
+			<paper-icon-button slot="actions" disabled$="[[ prevDisabled ]]" icon="chevron-left" cosmoz-data-nav-select="-1"></paper-icon-button>
 			<span>[[ index ]]</span>
-			<paper-icon-button slot="actions" disabled\$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
+			<paper-icon-button slot="actions" disabled$="[[ nextDisabled ]]" icon="chevron-right" cosmoz-data-nav-select="+1"></paper-icon-button>
 			<paper-icon-button icon="refresh" on-tap="onReplace">Replace</paper-icon-button>
 		</div>
 `;
