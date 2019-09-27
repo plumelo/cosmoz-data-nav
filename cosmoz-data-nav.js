@@ -393,6 +393,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 				incompleteTemplate = templates.find(n => n.matches('[incomplete]')) || this.$.incompleteTemplate;
 
 			if (!elementTemplate) {
+				// eslint-disable-next-line no-console
 				console.warn('cosmoz-data-nav requires a template');
 				return;
 			}
@@ -506,9 +507,11 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 			matches = items.filter(item => this._getItemId(item) === id);
 
 		if (matches.length === 0) {
+			// eslint-disable-next-line no-console
 			console.warn('trying to replace an item that is not in the list', id, item);
 			return;
 		} else if (matches.length > 1) {
+			// eslint-disable-next-line no-console
 			console.warn('found multiple items with same id');
 		}
 
@@ -606,8 +609,8 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 		if (!renderedElement) {
 			return;
 		}
-		const elementIndex = elements.indexOf(element);
-		const renderedIndex = elements.indexOf(renderedElement);
+		const elementIndex = elements.indexOf(element),
+			renderedIndex = elements.indexOf(renderedElement);
 		if (elementIndex === renderedIndex) {
 			return;
 		}
@@ -812,9 +815,9 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 			offset = buffer / 2 >> 0, // eslint-disable-line no-bitwise
 			max = Math.max,
 			min = Math.min,
-			length = this.items.length;
+			length = this.items.length,
 
-		const start = min(max(selected - offset, 0), length ? length - buffer : 0),
+			start = min(max(selected - offset, 0), length ? length - buffer : 0),
 			end = max(min(selected + offset, length ? length - 1 : 0), buffer - 1),
 			indexes = Array(end + 1)
 				.fill()

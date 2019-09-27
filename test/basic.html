@@ -171,9 +171,9 @@
 				});
 
 				test('setItemById handlers duplicate ids', done => {
-					const warnSpy = sinon.spy(console, 'warn');
-					const data = { id: 0 };
-					const cache = nav._cache;
+					const warnSpy = sinon.spy(console, 'warn'),
+						data = { id: 0 },
+						cache = nav._cache;
 					nav.setItemById('0', data);
 					assert.isTrue(warnSpy.calledWithExactly('found multiple items with same id'), true);
 					assert.equal(cache['0'].id, data.id);
@@ -268,8 +268,8 @@
 				});
 
 				test('setItemById warns about a unknown item', () => {
-					const warnSpy = sinon.spy(console, 'warn');
-					const data = { id: 23 };
+					const warnSpy = sinon.spy(console, 'warn'),
+						data = { id: 23 };
 					nav.setItemById('23', data);
 					assert.isTrue(warnSpy.calledWithExactly('trying to replace an item that is not in the list', '23', data), true);
 					warnSpy.restore();
