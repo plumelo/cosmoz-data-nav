@@ -32,7 +32,7 @@
 	"dependencies": {
 		"@neovici/cosmoz-bottom-bar": "github:neovici/cosmoz-bottom-bar#semver:^3.0.2",
 		"@neovici/cosmoz-i18next": "github:neovici/cosmoz-i18next#semver:^3.0.1",
-		"@neovici/cosmoz-page-router": "github:neovici/cosmoz-page-router#semver:^3.0.3",
+		"@neovici/cosmoz-page-router": "github:neovici/cosmoz-page-router#semver:^4.0.0",
 		"@polymer/iron-flex-layout": "^3.0.0",
 		"@polymer/iron-resizable-behavior": "^3.0.1",
 		"@polymer/paper-icon-button": "^3.0.0",
