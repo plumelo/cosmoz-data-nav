@@ -76,16 +76,15 @@
 		suite('bugs', () => {
 			test('https://github.com/Neovici/cosmoz-data-nav/issues/84', async () => {
 				const items = [
-					{id: 0},
-					{id: 1},
-					{id: 2},
-					{id: 3},
-					{id: 4}
-				];
-
-				// initialize cosmoz-data-nav as hidden,
-				// simulating the list-queue-core behavior
-				const nav = fixture('hidden');
+						{id: 0},
+						{id: 1},
+						{id: 2},
+						{id: 3},
+						{id: 4}
+					],
+					// initialize cosmoz-data-nav as hidden,
+					// simulating the list-queue-core behavior
+					nav = fixture('hidden');
 				nav._templatesObserver.flush();
 
 				// the bug manifests when data is set as incomplete,

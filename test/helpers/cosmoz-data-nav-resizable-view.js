@@ -52,6 +52,7 @@ class CosmozDataNavResizableView extends mixinBehaviors([IronResizableBehavior],
 		super.ready();
 	}
 	_onIronResize() {
+		// eslint-disable-next-line no-console
 		console.log('resize called on resizable view.');
 	}
 }

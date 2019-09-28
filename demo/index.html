@@ -89,6 +89,7 @@
 					Base.cancelAsync(asyncs[id]);
 					asyncs[id] = null;
 				}
+				// eslint-disable-next-line no-console
 				console.log('on need data');
 				asyncs[id] = Base.async(() => {
 					event.target.setItemById(detail.id, { id: detail.id });
