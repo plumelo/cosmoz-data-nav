@@ -55,6 +55,7 @@
 	<script type="module">
 		/* eslint-disable max-lines-per-function, max-statements, max-nested-callbacks */
 		import { flushRenderQueue, selectedSlide } from './helpers/utils';
+		import { flush as syncFlush } from '@polymer/polymer/lib/utils/flush';
 
 		describe('cosmoz-data-nav', () => {
 			describe('constructor', () => {
@@ -92,12 +93,12 @@
 
 			context('properties', () => {
 				let nav;
-				beforeEach(done => {
+				beforeEach(() => {
 					nav = fixture('basic');
 					nav._templatesObserver.flush();
 					nav.items = [{id: 1}, {id: 2}, {id: 3}];
 					flushRenderQueue(nav);
-					setTimeout(done, 50);
+					syncFlush();
 				});
 
 				describe('animating', () => {
