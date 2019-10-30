@@ -55,6 +55,7 @@
 	<script type="module">
 		/* eslint-disable max-lines-per-function, max-statements, max-nested-callbacks */
 		import { flushRenderQueue, selectedSlide } from './helpers/utils';
+		import { flush as syncFlush } from '@polymer/polymer/lib/utils/flush';
 
 		describe('cosmoz-data-nav', () => {
 			describe('constructor', () => {
@@ -92,12 +93,12 @@
 
 			context('properties', () => {
 				let nav;
-				beforeEach(done => {
+				beforeEach(() => {
 					nav = fixture('basic');
 					nav._templatesObserver.flush();
 					nav.items = [{id: 1}, {id: 2}, {id: 3}];
 					flushRenderQueue(nav);
-					setTimeout(done, 50);
+					syncFlush();
 				});
 
 				describe('animating', () => {
@@ -251,6 +252,18 @@
 								expect(nav.selected).to.equal(1);
 								flushRenderQueue(nav);
 								expect(selectedSlide(nav).textContent).to.equal('id: d,index: 1');
+							});
+
+							it('realigns element if already rendered', () => {
+								nav.items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+								nav.selected = 1;
+								flushRenderQueue(nav);
+								expect(selectedSlide(nav).textContent).to.equal('id: b,index: 1');
+
+								nav.items = [{ id: 'a' }, { id: 'c' }, { id: 'd' }];
+								expect(nav.selected).to.equal(1);
+								flushRenderQueue(nav);
+								expect(selectedSlide(nav).textContent).to.equal('id: c,index: 1');
 							});
 
 							it('updates `selected` if there are not enough items', () => {
