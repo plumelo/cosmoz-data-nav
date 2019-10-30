@@ -615,6 +615,12 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 			return;
 		}
 
+		// update instance's data-nav related props
+		const instance = renderedElement.__instance;
+		Object.entries(this._getBaseProps(index))
+			.forEach(([key, value]) => instance._setPendingProperty(key, value));
+		instance._flushProperties();
+
 		this.splice('_elements', renderedIndex, 1);
 		this.splice('_elements', elementIndex, 0, renderedElement);
 	}
