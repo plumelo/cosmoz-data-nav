@@ -1,3 +1,11 @@
+## [3.0.6](https://github.com/neovici/cosmoz-data-nav/compare/v3.0.5...v3.0.6) (2019-10-31)
+
+
+### Bug Fixes
+
+* 🐛 data-nav related props are not updated when realigned ([3449d62](https://github.com/neovici/cosmoz-data-nav/commit/3449d62))
+* do not update instance if it was realigned ([7cc1b8d](https://github.com/neovici/cosmoz-data-nav/commit/7cc1b8d)), closes [#90](https://github.com/neovici/cosmoz-data-nav/issues/90)
+
 ## [3.0.5](https://github.com/neovici/cosmoz-data-nav/compare/v3.0.4...v3.0.5) (2019-10-10)
 
 
