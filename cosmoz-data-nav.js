@@ -236,8 +236,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 			selectedElement: {
 				type: Object,
 				notify: true,
-				readOnly: true,
-				computed: '_getElement(selected, _elements.*)'
+				readOnly: true
 			},
 
 			/**
@@ -246,8 +245,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 			selectedInstance: {
 				type: Object,
 				notify: true,
-				readOnly: true,
-				computed: '_getInstance(selectedElement)'
+				readOnly: true
 			},
 
 			/**
@@ -621,7 +619,7 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 			.forEach(([key, value]) => instance._setPendingProperty(key, value));
 		instance._flushProperties();
 
-		this.splice('_elements', renderedIndex, 1);
+		this._elements.splice(renderedIndex, 1);
 		this.splice('_elements', elementIndex, 0, renderedElement);
 	}
 
@@ -647,6 +645,9 @@ class CosmozDataNav extends translatable(mixinBehaviors([IronResizableBehavior],
 		if (!element) {
 			return;
 		}
+
+		this._setSelectedElement(element);
+		this._setSelectedInstance(this._getInstance(element));
 
 		this._updateHashForSelected(position);
 
