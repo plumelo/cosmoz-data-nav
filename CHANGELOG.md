@@ -1,3 +1,10 @@
+## [3.0.7](https://github.com/neovici/cosmoz-data-nav/compare/v3.0.6...v3.0.7) (2020-01-08)
+
+
+### Bug Fixes
+
+* refactor selectedInstance and selectedElement notification ([c655e56](https://github.com/neovici/cosmoz-data-nav/commit/c655e56841b5296fc9a9c994af576900e0b1fc5c)), closes [#106](https://github.com/neovici/cosmoz-data-nav/issues/106)
+
 ## [3.0.6](https://github.com/neovici/cosmoz-data-nav/compare/v3.0.5...v3.0.6) (2019-10-31)
 
 
